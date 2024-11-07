@@ -1,0 +1,20 @@
+gravebound_projet/
+├── src/
+│   ├── main.c
+│   ├── game/
+│   │   ├── game.h
+│   │   └── game.c
+│   ├── UI/
+│   │   ├── graphique.h
+│   │   └── graphique.c
+│   ├── controller/
+│   │   ├── controller.h
+│   │   └── controller.c
+│   └── logs/
+│       ├── logging.h
+│       └── logging.c
+├── assets/
+│   └── map/
+│       └── map_gravebound_1.png
+├── Makefile
+└── README.md
