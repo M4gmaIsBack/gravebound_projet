@@ -14,8 +14,10 @@ int initManette();
 
 void fermerManette();
 
-// Gere le deplacement de la carte en fonction de la manette
+// Gere le deplacement de la carte en fonction de la manette et clavier souris
 // Prend en parametre SDL et la structure de jeu
 void gererDeplacementCarte(SDL_Event *event, Jeu *jeu);
+void gererDeplacementClavier(SDL_Event *event, Jeu *jeu);
+
 
 #endif

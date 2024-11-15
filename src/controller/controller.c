@@ -30,6 +30,29 @@ void fermerManette() {
     }
 }
 
+// Gestion du deplacement via clavier
+void gererDeplacementClavier(SDL_Event *event, Jeu *jeu) {
+    switch (event->key.keysym.sym) {
+        case SDLK_z: // Haut
+            jeu->carteY -= JOYSTICK_VITESSE_MAX;
+            logMessage("Deplacement haut (clavier)");
+            break;
+        case SDLK_s: // Bas
+            jeu->carteY += JOYSTICK_VITESSE_MAX;
+            logMessage("Deplacement bas (clavier)");
+            break;
+        case SDLK_q: // Gauche
+            jeu->carteX -= JOYSTICK_VITESSE_MAX;
+            logMessage("Deplacement gauche (clavier)");
+            break;
+        case SDLK_d: // Droite
+            jeu->carteX += JOYSTICK_VITESSE_MAX;
+            logMessage("Deplacement droite (clavier)");
+            break;
+    }
+}
+
+
 // Gere le deplacement de la carte
 void gererDeplacementCarte(SDL_Event *event, Jeu *jeu) {
     if (event->type == SDL_CONTROLLERAXISMOTION) {

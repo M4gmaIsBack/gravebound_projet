@@ -31,30 +31,29 @@ void bouclePrincipale(Game *game) {
     int running = game->running;
 
     while (running) {
-        // Gestion des evenements SDL
         while (SDL_PollEvent(&event)) {
-            // Verification de fermeture de l'application
-            if (event.type == SDL_QUIT) {
+            if (event.type == SDL_QUIT || 
+               (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE)) {
                 running = 0;
             }
 
-            // Gestion du deplacement par manette
+            // Gestion du déplacement via la manette
             if (event.type == SDL_CONTROLLERAXISMOTION) {
                 gererDeplacementCarte(&event, &game->jeu);
             }
 
-            if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) {
-                running = 0;
+            // Gestion du déplacement clavier
+            if (event.type == SDL_KEYDOWN) {
+                gererDeplacementClavier(&event, &game->jeu);
             }
         }
 
-        // Mise a jour du rendu graphique
         majRendu(&game->jeu);
 
-        //FPS 60
-        SDL_Delay(16);
+        SDL_Delay(16); // Limitation à 60 FPS
     }
 }
+
 
 
 void nettoyerRessources(Game *game) {
