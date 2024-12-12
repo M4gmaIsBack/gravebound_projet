@@ -10,6 +10,9 @@ gravebound_projet/
 │   ├── controller/
 │   │   ├── controller.h
 │   │   └── controller.c
+│   ├── map/
+│   │   ├── procedural.c
+│   │   └── procedural.h
 │   └── logs/
 │       ├── logging.h
 │       └── logging.c
