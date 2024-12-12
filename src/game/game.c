@@ -14,12 +14,6 @@ int initJeu(Game *game) {
         return 0;
     }
 
-    // Initialisation du peripherique de la manette
-    if (!initManette()) {
-        logMessage("Erreur initialisation manette");
-        return 0;
-    }
-
     logMessage("Jeu initialisé avec succès");
     return 1;
 }
