@@ -1,10 +1,12 @@
 #include "graphique.h"
 #include "../logs/logging.h"
 #include "../controller/controller.h"
+#include "../entities/character.h"
+#include "../entities/character.c"
 
-// Initialise  SDL
-// Configure la fenetre, charge la map
-// Retourne 1 si succes, 0 en cas d'echec
+// Initialise SDL
+// Configure la fenêtre, charge la carte et le personnage
+// Retourne 1 si succès, 0 en cas d'échec
 int initGraphique(Jeu *jeu) {
     // Initialisation des modules SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0) {
@@ -12,7 +14,7 @@ int initGraphique(Jeu *jeu) {
         return 0;
     }
 
-    // Creation de la fenetre principale
+    // Création de la fenêtre principale
     jeu->window = SDL_CreateWindow(
         "Gravebound",
         SDL_WINDOWPOS_CENTERED,
@@ -23,24 +25,30 @@ int initGraphique(Jeu *jeu) {
     );
 
     if (!jeu->window) {
-        logMessage("Erreur création fenetre: %s", SDL_GetError());
+        logMessage("Erreur création fenêtre: %s", SDL_GetError());
         return 0;
     }
 
-    // Creation du renderer
+    // Création du renderer
     jeu->renderer = SDL_CreateRenderer(jeu->window, -1, SDL_RENDERER_ACCELERATED);
     if (!jeu->renderer) {
         logMessage("Erreur création renderer: %s", SDL_GetError());
         return 0;
     }
 
-    // Initialisation des coordonnees de la carte
+    // Initialisation des coordonnées de la carte
     jeu->carteX = 0;
     jeu->carteY = 0;
 
-    // Chargement de la map
+    // Chargement de la carte
     if (!chargerCarte(jeu)) {
         logMessage("Erreur chargement carte");
+        return 0;
+    }
+
+    // Chargement du personnage
+    if (!chargerPersonnage(jeu->renderer)) {
+        logMessage("Erreur chargement personnage");
         return 0;
     }
 
@@ -48,20 +56,16 @@ int initGraphique(Jeu *jeu) {
 }
 
 // Charge la texture de la carte depuis un fichier image
-// Initialise les dimensions de la carte
-// Retourne 1 si succes, 0 en cas d'echec
+// Retourne 1 si succès, 0 en cas d'échec
 int chargerCarte(Jeu *jeu) {
-    // Chargement de l'image de la carte
     SDL_Surface *surface = IMG_Load("./assets/map/map_gravebound_1.png");
     if (!surface) {
         logMessage("Erreur chargement image: %s", IMG_GetError());
         return 0;
     }
 
-    // Creation de la texture a partir de l'image
     jeu->carteTexture = SDL_CreateTextureFromSurface(jeu->renderer, surface);
     SDL_QueryTexture(jeu->carteTexture, NULL, NULL, &jeu->largeurCarte, &jeu->hauteurCarte);
-
     SDL_FreeSurface(surface);
 
     if (!jeu->carteTexture) {
@@ -72,21 +76,20 @@ int chargerCarte(Jeu *jeu) {
     return 1;
 }
 
-// Libere toutes les ressources graphiques
+// Libère toutes les ressources graphiques
 void fermerGraphique(Jeu *jeu) {
-    // Destruction de la texture de carte
     if (jeu->carteTexture) {
         SDL_DestroyTexture(jeu->carteTexture);
         jeu->carteTexture = NULL;
     }
 
-    // Destruction du renderer
+    fermerPersonnage(); // Libère la texture du personnage
+
     if (jeu->renderer) {
         SDL_DestroyRenderer(jeu->renderer);
         jeu->renderer = NULL;
     }
 
-    // Destruction de la fenetre
     if (jeu->window) {
         SDL_DestroyWindow(jeu->window);
         jeu->window = NULL;
@@ -95,31 +98,23 @@ void fermerGraphique(Jeu *jeu) {
     SDL_Quit();
 }
 
-// Dessine la carte et le personnage
+// Met à jour le rendu : dessine la carte et le personnage
 void majRendu(Jeu *jeu) {
-    // Efface l'ecran avec un fond noir
     SDL_SetRenderDrawColor(jeu->renderer, 0, 0, 0, 255);
     SDL_RenderClear(jeu->renderer);
 
     // Dessine la carte
     SDL_Rect carteRect = {
-        jeu->carteX,
-        jeu->carteY,
-        jeu->largeurCarte,
-        jeu->hauteurCarte
+        jeu->carteX, jeu->carteY, jeu->largeurCarte, jeu->hauteurCarte
     };
     SDL_RenderCopy(jeu->renderer, jeu->carteTexture, NULL, &carteRect);
 
-    // Dessine un point rouge representant le personnage
-    SDL_SetRenderDrawColor(jeu->renderer, 255, 0, 0, 255);
-    SDL_Rect personnageRect = {
-        LARGEUR_ECRAN/2 - 5,
-        HAUTEUR_ECRAN/2 - 5,
-        10,
-        10
-    };
-    SDL_RenderFillRect(jeu->renderer, &personnageRect);
+    // Récupère l'état du clavier
+    const Uint8* state = SDL_GetKeyboardState(NULL);
 
-    // Affiche le rendu a l'ecran
+    // Met à jour et dessine le personnage
+    mettreAJourPersonnage(state);
+    dessinerPersonnage(jeu->renderer, LARGEUR_ECRAN / 2 - 16, HAUTEUR_ECRAN / 2 - 24);
+
     SDL_RenderPresent(jeu->renderer);
 }
