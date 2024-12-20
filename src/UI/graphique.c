@@ -1,11 +1,22 @@
 #include "graphique.h"
 #include "../logs/logging.h"
 #include "../controller/controller.h"
+#include "../map/procedural.h"
 
 // Initialise  SDL
 // Configure la fenetre, charge la map
 // Retourne 1 si succes, 0 en cas d'echec
 int initGraphique(Jeu *jeu) {
+
+    jeu->map = creerCarte(200);
+    jeu->map = genererCarte(jeu->map);
+    if(!enregistrerCarte(jeu->map)){
+        logMessage("Erreur enregistrement carte");
+        return 0;
+    } else {
+        logMessage("Carte enregistrée");
+    }
+
     // Initialisation des modules SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0) {
         logMessage("Erreur SDL init: %s", SDL_GetError());
@@ -51,33 +62,54 @@ int initGraphique(Jeu *jeu) {
 // Initialise les dimensions de la carte
 // Retourne 1 si succes, 0 en cas d'echec
 int chargerCarte(Jeu *jeu) {
-    // Chargement de l'image de la carte
-    SDL_Surface *surface = IMG_Load("./assets/map/map_gravebound_1.png");
-    if (!surface) {
-        logMessage("Erreur chargement image: %s", IMG_GetError());
-        return 0;
+    for (int i = 0; i < jeu->map.taille; i++) {
+        for (int j = 0; j < jeu->map.taille; j++) {
+            SDL_Surface *surface = IMG_Load(jeu->map.cases[i][j].texture_path);
+            if (!surface) {
+                logMessage("Erreur chargement image %s: %s", 
+                            jeu->map.cases[i][j].texture_path, IMG_GetError());
+                return 0;
+            }
+
+            jeu->map.cases[i][j].texture = SDL_CreateTextureFromSurface(jeu->renderer, surface);
+            SDL_FreeSurface(surface); // Libérer immédiatement après utilisation
+
+            if (!jeu->map.cases[i][j].texture) {
+                logMessage("Erreur création texture %s: %s", 
+                            jeu->map.cases[i][j].texture_path, SDL_GetError());
+                
+                // Libérer les textures déjà créées
+                for (int k = 0; k <= i; k++) {
+                    for (int l = 0; l < (k == i ? j : jeu->map.taille); l++) {
+                        if (jeu->map.cases[k][l].texture) {
+                            SDL_DestroyTexture(jeu->map.cases[k][l].texture);
+                        }
+                    }
+                }
+                return 0;
+            }
+        }
     }
-
-    // Creation de la texture a partir de l'image
-    jeu->carteTexture = SDL_CreateTextureFromSurface(jeu->renderer, surface);
-    SDL_QueryTexture(jeu->carteTexture, NULL, NULL, &jeu->largeurCarte, &jeu->hauteurCarte);
-
-    SDL_FreeSurface(surface);
-
-    if (!jeu->carteTexture) {
-        logMessage("Erreur création texture: %s", SDL_GetError());
-        return 0;
-    }
-
+    jeu->largeurCarte = jeu->map.taille;
+    jeu->hauteurCarte = jeu->map.taille;
     return 1;
+}
+
+// Fonction pour appliquer un filtre de couleur (assombrir ou éclaircir)
+void appliquerFiltreCouleur(SDL_Renderer *renderer, SDL_Texture *texture, Uint8 r, Uint8 g, Uint8 b) {
+    // Applique une modification de couleur sur la texture
+    SDL_SetTextureColorMod(texture, r, g, b);
 }
 
 // Libere toutes les ressources graphiques
 void fermerGraphique(Jeu *jeu) {
-    // Destruction de la texture de carte
-    if (jeu->carteTexture) {
-        SDL_DestroyTexture(jeu->carteTexture);
-        jeu->carteTexture = NULL;
+    // Libération des textures des cases
+    for (int i = 0; i < jeu->map.taille; i++) {
+        for (int j = 0; j < jeu->map.taille; j++) {
+            if (jeu->map.cases[i][j].texture) {
+                SDL_DestroyTexture(jeu->map.cases[i][j].texture);
+            }
+        }
     }
 
     // Destruction du renderer
@@ -86,7 +118,7 @@ void fermerGraphique(Jeu *jeu) {
         jeu->renderer = NULL;
     }
 
-    // Destruction de la fenetre
+    // Destruction de la fenêtre
     if (jeu->window) {
         SDL_DestroyWindow(jeu->window);
         jeu->window = NULL;
@@ -95,31 +127,46 @@ void fermerGraphique(Jeu *jeu) {
     SDL_Quit();
 }
 
-// Dessine la carte et le personnage
+// Dessine la carte et le personnage avec un filtre de couleur
 void majRendu(Jeu *jeu) {
-    // Efface l'ecran avec un fond noir
+    // Efface l'écran avec un fond noir
     SDL_SetRenderDrawColor(jeu->renderer, 0, 0, 0, 255);
     SDL_RenderClear(jeu->renderer);
 
-    // Dessine la carte
-    SDL_Rect carteRect = {
-        jeu->carteX,
-        jeu->carteY,
-        jeu->largeurCarte,
-        jeu->hauteurCarte
-    };
-    SDL_RenderCopy(jeu->renderer, jeu->carteTexture, NULL, &carteRect);
+    // Définir les couleurs du filtre (exemple: assombrir)
 
-    // Dessine un point rouge representant le personnage
+
+    // Dessine chaque case de la carte avec un filtre de couleur
+    for (int i = 0; i < jeu->map.taille; i++) {
+        for (int j = 0; j < jeu->map.taille; j++) {
+            // Applique le filtre de couleur avant de dessiner
+
+            Uint8 r = jeu->map.cases[i][j].brightness_R; // Rouge
+            Uint8 g = jeu->map.cases[i][j].brightness_G; // Vert
+            Uint8 b = jeu->map.cases[i][j].brightness_B; // Bleu
+
+            appliquerFiltreCouleur(jeu->renderer, jeu->map.cases[i][j].texture, r, g, b);
+            
+            SDL_Rect dest = {
+                jeu->carteX + j * LARGEUR_CASE, 
+                jeu->carteY + i * HAUTEUR_CASE,
+                LARGEUR_CASE, 
+                HAUTEUR_CASE
+            };
+            SDL_RenderCopy(jeu->renderer, jeu->map.cases[i][j].texture, NULL, &dest);
+        }
+    }
+
+    // Dessine un point rouge représentant le personnage
     SDL_SetRenderDrawColor(jeu->renderer, 255, 0, 0, 255);
     SDL_Rect personnageRect = {
-        LARGEUR_ECRAN/2 - 5,
-        HAUTEUR_ECRAN/2 - 5,
+        LARGEUR_ECRAN / 2 - 5,
+        HAUTEUR_ECRAN / 2 - 5,
         10,
         10
     };
     SDL_RenderFillRect(jeu->renderer, &personnageRect);
 
-    // Affiche le rendu a l'ecran
+    // Affiche le rendu à l'écran
     SDL_RenderPresent(jeu->renderer);
 }
