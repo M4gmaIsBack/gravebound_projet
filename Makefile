@@ -13,7 +13,8 @@ SRC = $(SRC_DIR)/main.c \
       $(SRC_DIR)/logs/logging.c \
       $(SRC_DIR)/controller/controller.c \
       $(SRC_DIR)/game/game.c \
-	  $(SRC_DIR)/map/procedural.c
+	  $(SRC_DIR)/map/procedural.c \
+	  $(SRC_DIR)/entities/character.c
 
 # Conversion des fichiers sources en fichiers objets
 OBJ = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
@@ -25,7 +26,7 @@ EXEC = $(BIN_DIR)/gravebound.exe
 all: $(EXEC)
 
 # Creation automatique des repertoires necessaires
-$(shell mkdir -p $(OBJ_DIR)/UI $(OBJ_DIR)/logs $(OBJ_DIR)/controller $(OBJ_DIR)/game $(OBJ_DIR)/map $(BIN_DIR))
+$(shell mkdir -p $(OBJ_DIR)/UI $(OBJ_DIR)/logs $(OBJ_DIR)/controller $(OBJ_DIR)/game $(OBJ_DIR)/map $(OBJ_DIR)/entities $(BIN_DIR))
 
 # Regle de generation de l'executable
 $(EXEC): $(OBJ)
