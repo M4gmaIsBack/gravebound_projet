@@ -18,7 +18,7 @@ int initGraphique(Jeu *jeu) {
         logMessage("Carte enregistrée");
     }
 
-    // Initialisation SDL et fenêtres
+    // Initialisation SDL et création des fenêtres
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0) {
         logMessage("Erreur SDL init: %s", SDL_GetError());
         return 0;
@@ -44,6 +44,10 @@ int initGraphique(Jeu *jeu) {
         return 0;
     }
 
+    // Initialisation des coordonnées de la carte
+    jeu->carteX = 0;
+    jeu->carteY = 0;
+
     return 1;
 }
 
@@ -67,13 +71,14 @@ int chargerCarte(Jeu *jeu) {
         }
     }
 
-    jeu->largeurCarte = jeu->map.taille;
-    jeu->hauteurCarte = jeu->map.taille;
+    jeu->largeurCarte = jeu->map.taille * LARGEUR_CASE;
+    jeu->hauteurCarte = jeu->map.taille * HAUTEUR_CASE;
     return 1;
 }
 
 // Libère toutes les ressources graphiques
 void fermerGraphique(Jeu *jeu) {
+    // Libération des textures des cases
     for (int i = 0; i < jeu->map.taille; i++) {
         for (int j = 0; j < jeu->map.taille; j++) {
             if (jeu->map.cases[i][j].texture) {
@@ -82,25 +87,41 @@ void fermerGraphique(Jeu *jeu) {
         }
     }
 
+    // Libération du personnage
     fermerPersonnage();
 
     if (jeu->renderer) SDL_DestroyRenderer(jeu->renderer);
     if (jeu->window) SDL_DestroyWindow(jeu->window);
+
     SDL_Quit();
 }
 
-// Met à jour le rendu
+// Met à jour le rendu : dessine la carte et le personnage
 void majRendu(Jeu *jeu) {
+    // Efface l'écran avec un fond noir
     SDL_SetRenderDrawColor(jeu->renderer, 0, 0, 0, 255);
     SDL_RenderClear(jeu->renderer);
 
+    // Dessine chaque case de la carte
     for (int i = 0; i < jeu->map.taille; i++) {
         for (int j = 0; j < jeu->map.taille; j++) {
-            SDL_Rect dest = {jeu->carteX + j * LARGEUR_CASE, jeu->carteY + i * HAUTEUR_CASE, LARGEUR_CASE, HAUTEUR_CASE};
+            SDL_Rect dest = {
+                jeu->carteX + j * LARGEUR_CASE,
+                jeu->carteY + i * HAUTEUR_CASE,
+                LARGEUR_CASE,
+                HAUTEUR_CASE
+            };
             SDL_RenderCopy(jeu->renderer, jeu->map.cases[i][j].texture, NULL, &dest);
         }
     }
 
+    // Récupère l'état du clavier pour mettre à jour le personnage
+    const Uint8* state = SDL_GetKeyboardState(NULL);
+    mettreAJourPersonnage(state);
+
+    // Dessine le personnage au centre de l'écran
     dessinerPersonnage(jeu->renderer, LARGEUR_ECRAN / 2 - 16, HAUTEUR_ECRAN / 2 - 24);
+
+    // Affiche le rendu à l'écran
     SDL_RenderPresent(jeu->renderer);
 }
