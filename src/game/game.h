@@ -11,5 +11,7 @@ typedef struct {
 int initJeu(Game *game);
 void bouclePrincipale(Game *game);
 void nettoyerRessources(Game *game);
+void toggleFullscreen(Jeu *jeu);
+
 
 #endif
