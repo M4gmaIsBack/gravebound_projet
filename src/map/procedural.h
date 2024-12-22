@@ -1,11 +1,13 @@
 #ifndef PROCEDURAL_H
 #define PROCEDURAL_H
 
-
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
-typedef struct{
+#define LARGEUR_CASE 16
+#define HAUTEUR_CASE 16
+
+typedef struct {
     int x;
     int y;
     char *texture_path;
