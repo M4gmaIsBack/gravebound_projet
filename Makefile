@@ -5,6 +5,8 @@ LDFLAGS = -LC:/msys64/mingw64/lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_image
 # Repertoires du projet
 SRC_DIR = src
 OBJ_DIR = obj
+GAME_LOG_DIR = src/logs/game.log
+SEED_DIR = assets/map/seed.txt
 BIN_DIR = bin
 
 # Liste des fichiers sources
@@ -38,7 +40,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 
 # Nettoyage des fichiers generes
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR)
+	rm -rf $(OBJ_DIR) $(BIN_DIR) $(SEED_DIR) $(GAME_LOG_DIR)
 
 # Execution du programme
 run: $(EXEC)

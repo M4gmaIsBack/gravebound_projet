@@ -35,19 +35,35 @@ void gererDeplacementClavier(SDL_Event *event, Jeu *jeu) {
     switch (event->key.keysym.sym) {
         case SDLK_z: // Haut
             jeu->carteY += JOYSTICK_VITESSE_MAX;
+            jeu->startY += JOYSTICK_VITESSE_MAX;
+            jeu->endY += JOYSTICK_VITESSE_MAX;
             logMessage("Deplacement haut (clavier)");
+            printf("CarteX: %d, CarteY: %d\n", jeu->carteX, jeu->carteY);
+            printf("StartX: %d, StartY: %d, EndX: %d, EndY: %d\n", jeu->startX, jeu->startY, jeu->endX, jeu->endY);
             break;
         case SDLK_s: // Bas
             jeu->carteY -= JOYSTICK_VITESSE_MAX;
+            jeu->startY -= JOYSTICK_VITESSE_MAX;
+            jeu->endY -= JOYSTICK_VITESSE_MAX;
             logMessage("Deplacement bas (clavier)");
+            printf("CarteX: %d, CarteY: %d\n", jeu->carteX, jeu->carteY);
+            printf("StartX: %d, StartY: %d, EndX: %d, EndY: %d\n", jeu->startX, jeu->startY, jeu->endX, jeu->endY);
             break;
         case SDLK_q: // Gauche
             jeu->carteX += JOYSTICK_VITESSE_MAX;
+            jeu->startX += JOYSTICK_VITESSE_MAX;
+            jeu->endX += JOYSTICK_VITESSE_MAX;
             logMessage("Deplacement gauche (clavier)");
+            printf("CarteX: %d, CarteY: %d\n", jeu->carteX, jeu->carteY);
+            printf("StartX: %d, StartY: %d, EndX: %d, EndY: %d\n", jeu->startX, jeu->startY, jeu->endX, jeu->endY);
             break;
         case SDLK_d: // Droite
             jeu->carteX -= JOYSTICK_VITESSE_MAX;
+            jeu->startX -= JOYSTICK_VITESSE_MAX;
+            jeu->endX -= JOYSTICK_VITESSE_MAX;
             logMessage("Deplacement droite (clavier)");
+            printf("CarteX: %d, CarteY: %d\n", jeu->carteX, jeu->carteY);
+            printf("StartX: %d, StartY: %d, EndX: %d, EndY: %d\n", jeu->startX, jeu->startY, jeu->endX, jeu->endY);
             break;
     }
 }

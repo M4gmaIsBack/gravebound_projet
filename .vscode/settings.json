@@ -3,6 +3,7 @@
         "graphique.h": "c",
         "time.h": "c",
         "logging.h": "c",
-        "character.h": "c"
+        "character.h": "c",
+        "random": "c"
     }
 }
