@@ -1,11 +1,10 @@
-// Gestion du cycle de vie principal du jeu
 #include "game.h"
 #include "../ui/graphique.h"
 #include "../controller/controller.h"
 #include "../logs/logging.h"
 
 // Initialise le jeu
-// Retourne 1 si succes, 0 en cas d'echec
+// Retourne 1 si c'est good, 0 en cas d'echec
 int initJeu(Game *game) {
     game->running = 1;
 
@@ -19,37 +18,47 @@ int initJeu(Game *game) {
 }
 
 // Boucle principale de jeu
-// Gere les evenements, les entrees et le rendu
 void bouclePrincipale(Game *game) {
     SDL_Event event;
-    int running = game->running;
 
-    while (running) {
+    logMessage("Début de la boucle principale");
+    while (game->running) {
+        logMessage("Attente des événements SDL");
+
         while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT || 
-               (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE)) {
-                running = 0;
+            logMessage("Événement détecté : %d", event.type);
+
+            if (event.type == SDL_QUIT ||
+                (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE)) {
+                logMessage("Quitter la boucle principale");
+                game->running = 0;
             }
 
-            // Gestion du déplacement via la manette
-            if (event.type == SDL_CONTROLLERAXISMOTION) {
-                gererDeplacementCarte(&event, &game->jeu);
+            if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_F11) {
+                logMessage("Basculer en mode plein écran");
+                toggleFullscreen(&game->jeu);
             }
 
-            // Gestion du déplacement clavier
+            // Gestion des deplacements
             if (event.type == SDL_KEYDOWN) {
+                logMessage("Gestion du déplacement clavier");
                 gererDeplacementClavier(&event, &game->jeu);
+            }
+            if (event.type == SDL_CONTROLLERAXISMOTION) {
+                logMessage("Gestion du déplacement manette");
+                gererDeplacementCarte(&event, &game->jeu);
             }
         }
 
+        logMessage("Mise à jour du rendu");
         majRendu(&game->jeu);
 
-        SDL_Delay(16); // Limitation à 60 FPS
+        SDL_Delay(16);
     }
+    logMessage("Fin de la boucle principale");
 }
 
-
-
+// Nettoie les ressources du jeu
 void nettoyerRessources(Game *game) {
     fermerManette();
     fermerGraphique(&game->jeu);

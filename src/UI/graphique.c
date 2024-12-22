@@ -4,38 +4,52 @@
 #include "../entities/character.h"
 #include "../map/procedural.h"
 
-// Initialise SDL
-// Configure la fenêtre, charge la carte et le personnage
-// Retourne 1 si succès, 0 en cas d'échec
+// Initialise SDL, configure la fenêtre et charge la carte
 int initGraphique(Jeu *jeu) {
+    // Génération et sauvegarde de la carte
     jeu->map = creerCarte(200);
     jeu->map = genererCarte(jeu->map);
 
     if (!enregistrerCarte(jeu->map)) {
         logMessage("Erreur enregistrement carte");
         return 0;
-    } else {
-        logMessage("Carte enregistrée");
     }
+    logMessage("Carte enregistrée");
 
-    // Initialisation SDL et création des fenêtres
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0) {
         logMessage("Erreur SDL init: %s", SDL_GetError());
         return 0;
     }
 
-    jeu->window = SDL_CreateWindow("Gravebound", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, LARGEUR_ECRAN, HAUTEUR_ECRAN, SDL_WINDOW_SHOWN);
-    jeu->renderer = SDL_CreateRenderer(jeu->window, -1, SDL_RENDERER_ACCELERATED);
+    // Création de la fenetre en plein écran
+    SDL_DisplayMode displayMode;
+    if (SDL_GetCurrentDisplayMode(0, &displayMode) != 0) {
+        logMessage("Erreur récupération résolution: %s", SDL_GetError());
+        return 0;
+    }
 
+    jeu->window = SDL_CreateWindow(
+        "Gravebound",
+        SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED,
+        displayMode.w,
+        displayMode.h,
+        SDL_WINDOW_FULLSCREEN_DESKTOP
+    );
+
+    // Création du renderer
+    jeu->renderer = SDL_CreateRenderer(jeu->window, -1, SDL_RENDERER_ACCELERATED);
     if (!jeu->window || !jeu->renderer) {
         logMessage("Erreur création fenêtre/renderer: %s", SDL_GetError());
         return 0;
     }
 
-    // Chargement de la carte
-    if (!chargerCarte(jeu)) {
-        logMessage("Erreur chargement carte");
-        return 0;
+    SDL_GetWindowSize(jeu->window, &jeu->largeurEcran, &jeu->hauteurEcran);
+    logMessage("Fenêtre initialisée en plein écran : %dx%d", jeu->largeurEcran, jeu->hauteurEcran);
+
+    // Initialisation de la manette
+    if (!initManette()) {
+        logMessage("Manette non détectée ou échec d'initialisation");
     }
 
     // Chargement du personnage
@@ -44,14 +58,13 @@ int initGraphique(Jeu *jeu) {
         return 0;
     }
 
-    // Initialisation des coordonnées de la carte
     jeu->carteX = 0;
     jeu->carteY = 0;
 
     return 1;
 }
 
-// Charge la texture de la carte depuis un fichier image ou générée
+// Charge la texture de la carte
 int chargerCarte(Jeu *jeu) {
     for (int i = 0; i < jeu->map.taille; i++) {
         for (int j = 0; j < jeu->map.taille; j++) {
@@ -76,9 +89,8 @@ int chargerCarte(Jeu *jeu) {
     return 1;
 }
 
-// Libère toutes les ressources graphiques
+
 void fermerGraphique(Jeu *jeu) {
-    // Libération des textures des cases
     for (int i = 0; i < jeu->map.taille; i++) {
         for (int j = 0; j < jeu->map.taille; j++) {
             if (jeu->map.cases[i][j].texture) {
@@ -87,22 +99,20 @@ void fermerGraphique(Jeu *jeu) {
         }
     }
 
-    // Libération du personnage
     fermerPersonnage();
 
     if (jeu->renderer) SDL_DestroyRenderer(jeu->renderer);
     if (jeu->window) SDL_DestroyWindow(jeu->window);
 
     SDL_Quit();
+    logMessage("Ressources graphiques libérées");
 }
 
-// Met à jour le rendu : dessine la carte et le personnage
+// Met a jour le rendu, dessine la carte et le personnage
 void majRendu(Jeu *jeu) {
-    // Efface l'écran avec un fond noir
     SDL_SetRenderDrawColor(jeu->renderer, 0, 0, 0, 255);
     SDL_RenderClear(jeu->renderer);
 
-    // Dessine chaque case de la carte
     for (int i = 0; i < jeu->map.taille; i++) {
         for (int j = 0; j < jeu->map.taille; j++) {
             SDL_Rect dest = {
@@ -115,13 +125,30 @@ void majRendu(Jeu *jeu) {
         }
     }
 
-    // Récupère l'état du clavier pour mettre à jour le personnage
-    const Uint8* state = SDL_GetKeyboardState(NULL);
+    // Mise a jour du personnage
+    const Uint8 *state = SDL_GetKeyboardState(NULL);
     mettreAJourPersonnage(state);
+    dessinerPersonnage(jeu->renderer, jeu->largeurEcran / 2 - 16, jeu->hauteurEcran / 2 - 24);
 
-    // Dessine le personnage au centre de l'écran
-    dessinerPersonnage(jeu->renderer, LARGEUR_ECRAN / 2 - 16, HAUTEUR_ECRAN / 2 - 24);
-
-    // Affiche le rendu à l'écran
     SDL_RenderPresent(jeu->renderer);
+}
+
+// Basculer entre plein écran et mode fenêtré
+void toggleFullscreen(Jeu *jeu) {
+    Uint32 flags = SDL_GetWindowFlags(jeu->window);
+    if (flags & SDL_WINDOW_FULLSCREEN) {
+        SDL_SetWindowFullscreen(jeu->window, 0);
+        logMessage("Basculé en mode fenêtré");
+    } else {
+        SDL_SetWindowFullscreen(jeu->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+        logMessage("Basculé en mode plein écran");
+    }
+}
+
+void gererInputManette(Jeu *jeu, SDL_Event *event) {
+    if (event->type == SDL_CONTROLLERBUTTONDOWN) {
+        if (event->cbutton.button == SDL_CONTROLLER_BUTTON_START) {
+            toggleFullscreen(jeu);
+        }
+    }
 }
