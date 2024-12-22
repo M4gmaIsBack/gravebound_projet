@@ -81,29 +81,9 @@ int chargerCarte(Jeu* jeu) {
     return 1;
 }
 
-// Libère toutes les ressources graphiques, y compris le cache
-void fermerGraphique(Jeu* jeu) {
-    // Libération des textures des cases
-    for (int i = 0; i < jeu->map.taille; i++) {
-        for (int j = 0; j < jeu->map.taille; j++) {
-            jeu->map.cases[i][j].texture = NULL; // Texture partagée via le cache
-        }
-    }
 
-    // Libération du cache
-    libererCache();
-
-    // Libération des autres ressources
-    fermerPersonnage();
-
-    if (jeu->renderer) SDL_DestroyRenderer(jeu->renderer);
-    if (jeu->window) SDL_DestroyWindow(jeu->window);
-
-    SDL_Quit();
-}
-
-// Initialisation graphique
 int initGraphique(Jeu *jeu) {
+    // Création et génération de la carte
     jeu->map = creerCarte(3000);
     jeu->map = genererCarte(jeu->map);
 
@@ -113,18 +93,20 @@ int initGraphique(Jeu *jeu) {
     }
     logMessage("Carte enregistrée");
 
+    // Initialisation de SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0) {
         logMessage("Erreur SDL init: %s", SDL_GetError());
         return 0;
     }
 
-    // Création de la fenetre en plein écran
+    // Récupération de la résolution de l'écran
     SDL_DisplayMode displayMode;
     if (SDL_GetCurrentDisplayMode(0, &displayMode) != 0) {
         logMessage("Erreur récupération résolution: %s", SDL_GetError());
         return 0;
     }
 
+    // Création de la fenêtre en plein écran
     jeu->window = SDL_CreateWindow(
         "Gravebound",
         SDL_WINDOWPOS_CENTERED,
@@ -141,6 +123,7 @@ int initGraphique(Jeu *jeu) {
         return 0;
     }
 
+    // Récupération des dimensions actuelles de la fenêtre
     SDL_GetWindowSize(jeu->window, &jeu->largeurEcran, &jeu->hauteurEcran);
     logMessage("Fenêtre initialisée en plein écran : %dx%d", jeu->largeurEcran, jeu->hauteurEcran);
 
@@ -155,33 +138,33 @@ int initGraphique(Jeu *jeu) {
         return 0;
     }
 
-    // Initialisation des coordonnées de la carte
-    jeu->carteX = (LARGEUR_ECRAN - jeu->largeurCarte) / 2;
-    jeu->carteY = (HAUTEUR_ECRAN - jeu->hauteurCarte) / 2;
-
+    // Initialisation des coordonnées de la carte pour centrer la caméra sur le centre de la carte
+    jeu->carteX = -(jeu->map.taille * LARGEUR_CASE / 2) + (jeu->largeurEcran / 2);
+    jeu->carteY = -(jeu->map.taille * HAUTEUR_CASE / 2) + (jeu->hauteurEcran / 2);
 
     return 1;
 }
 
-// Charge la texture de la carte
-int chargerCarte(Jeu* jeu) {
+
+
+
+void fermerGraphique(Jeu *jeu) {
     for (int i = 0; i < jeu->map.taille; i++) {
         for (int j = 0; j < jeu->map.taille; j++) {
-            const char* cheminTexture = jeu->map.cases[i][j].texture_path;
-            SDL_Texture* texture = obtenirTexture(jeu->renderer, cheminTexture);
-            if (!texture) {
-                return 0;
+            if (jeu->map.cases[i][j].texture) {
+                SDL_DestroyTexture(jeu->map.cases[i][j].texture);
             }
-
-            jeu->map.cases[i][j].texture = texture;
         }
     }
 
-    jeu->largeurCarte = jeu->map.taille * LARGEUR_CASE;
-    jeu->hauteurCarte = jeu->map.taille * HAUTEUR_CASE;
-    return 1;
-}
+    fermerPersonnage();
 
+    if (jeu->renderer) SDL_DestroyRenderer(jeu->renderer);
+    if (jeu->window) SDL_DestroyWindow(jeu->window);
+
+    SDL_Quit();
+    logMessage("Ressources graphiques libérées");
+}
 
 #ifndef MAX
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
@@ -199,17 +182,6 @@ void chargerTextureChunk(chunk *c, SDL_Renderer *renderer) {
             return;
         }
 
-void fermerGraphique(Jeu *jeu) {
-    for (int i = 0; i < jeu->map.taille; i++) {
-        for (int j = 0; j < jeu->map.taille; j++) {
-            if (jeu->map.cases[i][j].texture) {
-                SDL_DestroyTexture(jeu->map.cases[i][j].texture);
-            }
-        }
-    }
-
-    fermerPersonnage();
-
         // Créez la texture originale (non modifiée)
         c->texture = SDL_CreateTextureFromSurface(renderer, surface);
         if (!c->texture) {
@@ -223,17 +195,12 @@ void fermerGraphique(Jeu *jeu) {
     }
 }
 
-    SDL_Quit();
-    logMessage("Ressources graphiques libérées");
-}
-
-// Met a jour le rendu, dessine la carte et le personnage
 void majRendu(Jeu *jeu) {
     SDL_SetRenderDrawColor(jeu->renderer, 0, 0, 0, 255);
     SDL_RenderClear(jeu->renderer);
 
-    int blocsVisiblesX = LARGEUR_ECRAN / LARGEUR_CASE + 2;
-    int blocsVisiblesY = HAUTEUR_ECRAN / HAUTEUR_CASE + 2;
+    int blocsVisiblesX = jeu->largeurEcran / LARGEUR_CASE + 2;
+    int blocsVisiblesY = jeu->hauteurEcran / HAUTEUR_CASE + 2;
 
     int debutX = MAX(0, -jeu->carteX / LARGEUR_CASE);
     int debutY = MAX(0, -jeu->carteY / HAUTEUR_CASE);
@@ -244,7 +211,6 @@ void majRendu(Jeu *jeu) {
         for (int j = debutX; j < finX; j++) {
             chunk *currentChunk = &jeu->map.cases[i][j];
 
-            // Charge la texture si elle n'est pas encore chargée
             if (!currentChunk->loaded) {
                 chargerTextureChunk(currentChunk, jeu->renderer);
             }
@@ -256,14 +222,10 @@ void majRendu(Jeu *jeu) {
                 HAUTEUR_CASE
             };
 
-            if (dest.x + dest.w >= 0 && dest.x < LARGEUR_ECRAN &&
-                dest.y + dest.h >= 0 && dest.y < HAUTEUR_ECRAN) {
+            if (dest.x + dest.w >= 0 && dest.x < jeu->largeurEcran &&
+                dest.y + dest.h >= 0 && dest.y < jeu->hauteurEcran) {
                 if (currentChunk->texture) {
-
                     SDL_RenderCopy(jeu->renderer, currentChunk->texture, NULL, &dest);
-
-                    // Réinitialisez les couleurs après le rendu
-                    SDL_SetTextureColorMod(currentChunk->texture, 255, 255, 255);
                 } else {
                     SDL_SetRenderDrawColor(jeu->renderer, 100, 100, 100, 255);
                     SDL_RenderFillRect(jeu->renderer, &dest);
@@ -271,15 +233,16 @@ void majRendu(Jeu *jeu) {
             }
         }
     }
+
     const Uint8* state = SDL_GetKeyboardState(NULL);
     mettreAJourPersonnage(state);
-    dessinerPersonnage(jeu->renderer, LARGEUR_ECRAN / 2 - 16, HAUTEUR_ECRAN / 2 - 24);
-
+    dessinerPersonnage(jeu->renderer, jeu->largeurEcran / 2 - 16, jeu->hauteurEcran / 2 - 24);
 
     SDL_RenderPresent(jeu->renderer);
 }
 
-// Basculer entre plein écran et mode fenêtré
+
+
 void toggleFullscreen(Jeu *jeu) {
     Uint32 flags = SDL_GetWindowFlags(jeu->window);
     if (flags & SDL_WINDOW_FULLSCREEN) {
@@ -289,7 +252,12 @@ void toggleFullscreen(Jeu *jeu) {
         SDL_SetWindowFullscreen(jeu->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
         logMessage("Basculé en mode plein écran");
     }
+
+    // Mettre à jour les dimensions de la fenêtre
+    SDL_GetWindowSize(jeu->window, &jeu->largeurEcran, &jeu->hauteurEcran);
+    logMessage("Dimensions mises à jour : %dx%d", jeu->largeurEcran, jeu->hauteurEcran);
 }
+
 
 void gererInputManette(Jeu *jeu, SDL_Event *event) {
     if (event->type == SDL_CONTROLLERBUTTONDOWN) {
