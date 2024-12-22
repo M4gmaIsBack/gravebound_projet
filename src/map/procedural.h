@@ -11,11 +11,13 @@ typedef struct {
     int x;
     int y;
     char *texture_path;
-    SDL_Texture *texture;
+    SDL_Texture *texture;          // Texture modifiée
+    SDL_Texture *originalTexture;  // Texture originale
     int region;
     float brightness_R;
     float brightness_G;
     float brightness_B;
+    int loaded;
 } chunk;
 
 typedef struct {

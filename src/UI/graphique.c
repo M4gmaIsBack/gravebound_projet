@@ -1,13 +1,110 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "graphique.h"
 #include "../logs/logging.h"
 #include "../controller/controller.h"
 #include "../entities/character.h"
 #include "../map/procedural.h"
 
-// Initialise SDL, configure la fenêtre et charge la carte
+typedef struct TextureCache {
+    char* chemin;
+    SDL_Texture* texture;
+    struct TextureCache* suivant;
+} TextureCache;
+
+static TextureCache* cache = NULL;
+
+SDL_Texture* obtenirTexture(SDL_Renderer* renderer, const char* chemin) {
+    TextureCache* courant = cache;
+    while (courant) {
+        if (strcmp(courant->chemin, chemin) == 0) {
+            return courant->texture;
+        }
+        courant = courant->suivant;
+    }
+
+    // Charger une nouvelle texture si elle n'est pas dans le cache
+    SDL_Surface* surface = IMG_Load(chemin);
+    if (!surface) {
+        logMessage("Erreur chargement image: %s", IMG_GetError());
+        return NULL;
+    }
+
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_FreeSurface(surface);
+
+    if (!texture) {
+        logMessage("Erreur création texture: %s", SDL_GetError());
+        return NULL;
+    }
+
+    // Ajouter au cache
+    TextureCache* nouvelElement = malloc(sizeof(TextureCache));
+    nouvelElement->chemin = strdup(chemin);
+    nouvelElement->texture = texture;
+    nouvelElement->suivant = cache;
+    cache = nouvelElement;
+
+    return texture;
+}
+
+// Fonction pour libérer le cache
+void libererCache() {
+    TextureCache* courant = cache;
+    while (courant) {
+        TextureCache* suivant = courant->suivant;
+        SDL_DestroyTexture(courant->texture);
+        free(courant->chemin);
+        free(courant);
+        courant = suivant;
+    }
+    cache = NULL;
+}
+
+// Fonction pour charger les cases de la carte
+int chargerCarte(Jeu* jeu) {
+    for (int i = 0; i < jeu->map.taille; i++) {
+        for (int j = 0; j < jeu->map.taille; j++) {
+            const char* cheminTexture = jeu->map.cases[i][j].texture_path;
+            SDL_Texture* texture = obtenirTexture(jeu->renderer, cheminTexture);
+            if (!texture) {
+                return 0;
+            }
+
+            jeu->map.cases[i][j].texture = texture;
+        }
+    }
+
+    jeu->largeurCarte = jeu->map.taille * LARGEUR_CASE;
+    jeu->hauteurCarte = jeu->map.taille * HAUTEUR_CASE;
+    return 1;
+}
+
+// Libère toutes les ressources graphiques, y compris le cache
+void fermerGraphique(Jeu* jeu) {
+    // Libération des textures des cases
+    for (int i = 0; i < jeu->map.taille; i++) {
+        for (int j = 0; j < jeu->map.taille; j++) {
+            jeu->map.cases[i][j].texture = NULL; // Texture partagée via le cache
+        }
+    }
+
+    // Libération du cache
+    libererCache();
+
+    // Libération des autres ressources
+    fermerPersonnage();
+
+    if (jeu->renderer) SDL_DestroyRenderer(jeu->renderer);
+    if (jeu->window) SDL_DestroyWindow(jeu->window);
+
+    SDL_Quit();
+}
+
+// Initialisation graphique
 int initGraphique(Jeu *jeu) {
-    // Génération et sauvegarde de la carte
-    jeu->map = creerCarte(200);
+    jeu->map = creerCarte(3000);
     jeu->map = genererCarte(jeu->map);
 
     if (!enregistrerCarte(jeu->map)) {
@@ -58,29 +155,25 @@ int initGraphique(Jeu *jeu) {
         return 0;
     }
 
-    jeu->carteX = 0;
-    jeu->carteY = 0;
+    // Initialisation des coordonnées de la carte
+    jeu->carteX = (LARGEUR_ECRAN - jeu->largeurCarte) / 2;
+    jeu->carteY = (HAUTEUR_ECRAN - jeu->hauteurCarte) / 2;
+
 
     return 1;
 }
 
 // Charge la texture de la carte
-int chargerCarte(Jeu *jeu) {
+int chargerCarte(Jeu* jeu) {
     for (int i = 0; i < jeu->map.taille; i++) {
         for (int j = 0; j < jeu->map.taille; j++) {
-            SDL_Surface *surface = IMG_Load(jeu->map.cases[i][j].texture_path);
-            if (!surface) {
-                logMessage("Erreur chargement image: %s", IMG_GetError());
+            const char* cheminTexture = jeu->map.cases[i][j].texture_path;
+            SDL_Texture* texture = obtenirTexture(jeu->renderer, cheminTexture);
+            if (!texture) {
                 return 0;
             }
 
-            jeu->map.cases[i][j].texture = SDL_CreateTextureFromSurface(jeu->renderer, surface);
-            SDL_FreeSurface(surface);
-
-            if (!jeu->map.cases[i][j].texture) {
-                logMessage("Erreur création texture: %s", SDL_GetError());
-                return 0;
-            }
+            jeu->map.cases[i][j].texture = texture;
         }
     }
 
@@ -89,6 +182,22 @@ int chargerCarte(Jeu *jeu) {
     return 1;
 }
 
+
+#ifndef MAX
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+#endif
+
+#ifndef MIN
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#endif
+
+void chargerTextureChunk(chunk *c, SDL_Renderer *renderer) {
+    if (!c->loaded) {
+        SDL_Surface *surface = IMG_Load(c->texture_path);
+        if (!surface) {
+            printf("Erreur de chargement de la texture : %s\n", IMG_GetError());
+            return;
+        }
 
 void fermerGraphique(Jeu *jeu) {
     for (int i = 0; i < jeu->map.taille; i++) {
@@ -101,8 +210,18 @@ void fermerGraphique(Jeu *jeu) {
 
     fermerPersonnage();
 
-    if (jeu->renderer) SDL_DestroyRenderer(jeu->renderer);
-    if (jeu->window) SDL_DestroyWindow(jeu->window);
+        // Créez la texture originale (non modifiée)
+        c->texture = SDL_CreateTextureFromSurface(renderer, surface);
+        if (!c->texture) {
+            printf("Erreur de création de la texture : %s\n", SDL_GetError());
+            SDL_FreeSurface(surface);
+            return;
+        }
+
+        SDL_FreeSurface(surface);
+        c->loaded = 1; // Marquez le chunk comme chargé
+    }
+}
 
     SDL_Quit();
     logMessage("Ressources graphiques libérées");
@@ -113,22 +232,49 @@ void majRendu(Jeu *jeu) {
     SDL_SetRenderDrawColor(jeu->renderer, 0, 0, 0, 255);
     SDL_RenderClear(jeu->renderer);
 
-    for (int i = 0; i < jeu->map.taille; i++) {
-        for (int j = 0; j < jeu->map.taille; j++) {
+    int blocsVisiblesX = LARGEUR_ECRAN / LARGEUR_CASE + 2;
+    int blocsVisiblesY = HAUTEUR_ECRAN / HAUTEUR_CASE + 2;
+
+    int debutX = MAX(0, -jeu->carteX / LARGEUR_CASE);
+    int debutY = MAX(0, -jeu->carteY / HAUTEUR_CASE);
+    int finX = MIN(jeu->map.taille, debutX + blocsVisiblesX);
+    int finY = MIN(jeu->map.taille, debutY + blocsVisiblesY);
+
+    for (int i = debutY; i < finY; i++) {
+        for (int j = debutX; j < finX; j++) {
+            chunk *currentChunk = &jeu->map.cases[i][j];
+
+            // Charge la texture si elle n'est pas encore chargée
+            if (!currentChunk->loaded) {
+                chargerTextureChunk(currentChunk, jeu->renderer);
+            }
+
             SDL_Rect dest = {
                 jeu->carteX + j * LARGEUR_CASE,
                 jeu->carteY + i * HAUTEUR_CASE,
                 LARGEUR_CASE,
                 HAUTEUR_CASE
             };
-            SDL_RenderCopy(jeu->renderer, jeu->map.cases[i][j].texture, NULL, &dest);
+
+            if (dest.x + dest.w >= 0 && dest.x < LARGEUR_ECRAN &&
+                dest.y + dest.h >= 0 && dest.y < HAUTEUR_ECRAN) {
+                if (currentChunk->texture) {
+
+                    SDL_RenderCopy(jeu->renderer, currentChunk->texture, NULL, &dest);
+
+                    // Réinitialisez les couleurs après le rendu
+                    SDL_SetTextureColorMod(currentChunk->texture, 255, 255, 255);
+                } else {
+                    SDL_SetRenderDrawColor(jeu->renderer, 100, 100, 100, 255);
+                    SDL_RenderFillRect(jeu->renderer, &dest);
+                }
+            }
         }
     }
-
-    // Mise a jour du personnage
-    const Uint8 *state = SDL_GetKeyboardState(NULL);
+    const Uint8* state = SDL_GetKeyboardState(NULL);
     mettreAJourPersonnage(state);
-    dessinerPersonnage(jeu->renderer, jeu->largeurEcran / 2 - 16, jeu->hauteurEcran / 2 - 24);
+    dessinerPersonnage(jeu->renderer, LARGEUR_ECRAN / 2 - 16, HAUTEUR_ECRAN / 2 - 24);
+
 
     SDL_RenderPresent(jeu->renderer);
 }
