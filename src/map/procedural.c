@@ -4,29 +4,25 @@
 #include <time.h>
 #include "../map/procedural.h"
 
-#define SCALE 0.02f
+#define SCALE 0.004f
 #define GRID_SIZE 32
-#define AMPLITUDE 1.5
+#define AMPLITUDE 1.75
 
 
-// Fonction de produit scalaire pour simuler un gradient
 float dotGridGradient(int ix, int iy, float x, float y, float gradients[GRID_SIZE][GRID_SIZE][2]) {
     float dx = x - (float)ix;
     float dy = y - (float)iy;
     return (dx * gradients[ix % GRID_SIZE][iy % GRID_SIZE][0] + dy * gradients[ix % GRID_SIZE][iy % GRID_SIZE][1]);
 }
 
-// Fonction d'interpolation linéaire
 float lerp(float a, float b, float t) {
     return a + t * (b - a);
 }
 
-// Fonction d'interpolation lissée (fade)
 float fade(float t) {
     return t * t * t * (t * (t * 6 - 15) + 10);
 }
 
-// Implémentation du bruit simplifié
 float simpleNoise(float x, float y, float gradients[GRID_SIZE][GRID_SIZE][2]) {
     int x0 = (int)floor(x);
     int x1 = x0 + 1;
@@ -48,7 +44,6 @@ float simpleNoise(float x, float y, float gradients[GRID_SIZE][GRID_SIZE][2]) {
     return lerp(ix0, ix1, sy) * AMPLITUDE;
 }
 
-// Génère une grille de gradients aléatoires
 void generateGradients(float gradients[GRID_SIZE][GRID_SIZE][2]) {
     for (int i = 0; i < GRID_SIZE; i++) {
         for (int j = 0; j < GRID_SIZE; j++) {
@@ -92,17 +87,17 @@ int region_iles(float value) {
     else if (value > -0.25) return 0;
     else if (value > -0.3) return 1;
     else if (value > -0.65) return 4;
-    else if (value > -0.7) return 2;
+    else if (value > -0.8) return 2;
     else return 5;
 }
 
 int region_plaines(float value) {
     if (value > -0.2) return 4;
-    else if (value > -0.25) return 1;
-    else if (value > -0.35) return 0;
+    else if (value > -0.22) return 1;
+    else if (value > -0.38) return 0;
     else if (value > -0.4) return 1;
-    else if (value > -0.65) return 4;
-    else if (value > -0.7) return 2;
+    else if (value > -0.87) return 4;
+    else if (value > -0.9) return 2;
     else return 5;
 }
 
@@ -134,6 +129,11 @@ carte genererCarte(carte map) {
             map.cases[i][j].brightness_B = brightness;
             map.cases[i][j].region = region;
             map.cases[i][j].texture_path = map.regions[region];
+
+            if ((i - map.taille / 2) * (i - map.taille / 2) + (j - map.taille / 2) * (j - map.taille / 2) <= 50 * 50) {
+                map.cases[i][j].region = 2;
+                map.cases[i][j].texture_path = map.regions[2];
+            }
         }
     }
 
