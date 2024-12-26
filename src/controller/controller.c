@@ -32,21 +32,22 @@ void fermerManette() {
 // Gestion des déplacements via clavier
 void gererDeplacementClavier(SDL_Event *event, Jeu *jeu) {
     switch (event->key.keysym.sym) {
-        case SDLK_z:
-            jeu->carteY -= JOYSTICK_VITESSE_MAX;
-            logMessage("Déplacement haut (clavier)");
-            break;
-        case SDLK_s:
+
+        case SDLK_z: // Haut
             jeu->carteY += JOYSTICK_VITESSE_MAX;
-            logMessage("Déplacement bas (clavier)");
+            logMessage("Deplacement haut (clavier)");
             break;
-        case SDLK_q:
-            jeu->carteX -= JOYSTICK_VITESSE_MAX;
-            logMessage("Déplacement gauche (clavier)");
+        case SDLK_s: // Bas
+            jeu->carteY -= JOYSTICK_VITESSE_MAX;
+            logMessage("Deplacement bas (clavier)");
             break;
-        case SDLK_d:
+        case SDLK_q: // Gauche
             jeu->carteX += JOYSTICK_VITESSE_MAX;
-            logMessage("Déplacement droite (clavier)");
+            logMessage("Deplacement gauche (clavier)");
+            break;
+        case SDLK_d: // Droite
+            jeu->carteX -= JOYSTICK_VITESSE_MAX;
+            logMessage("Deplacement droite (clavier)");
             break;
     }
 }
