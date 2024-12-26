@@ -26,6 +26,6 @@ void chargerTextureChunk(chunk *c, SDL_Renderer *renderer);
 void majRendu(Jeu *jeu);
 void toggleFullscreen(Jeu *jeu);
 void gererInputManette(Jeu *jeu, SDL_Event *event);
-
+void boucleJeu(Jeu *jeu);
 
 #endif
