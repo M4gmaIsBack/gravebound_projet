@@ -84,7 +84,7 @@ int chargerCarte(Jeu* jeu) {
 
 int initGraphique(Jeu *jeu) {
     // Création et génération de la carte
-    jeu->map = creerCarte(3000);
+    jeu->map = creerCarte(2000);
     jeu->map = genererCarte(jeu->map);
 
     if (!enregistrerCarte(jeu->map)) {
