@@ -5,6 +5,7 @@
 #include "../logs/logging.h"
 #include "../controller/controller.h"
 #include "../entities/character.h"
+#include "../entities/zombies.h"
 #include "../map/procedural.h"
 
 #define FPS 60
@@ -155,6 +156,11 @@ int initGraphique(Jeu *jeu) {
         return 0;
     }
 
+    // Initialiser les zombies avec des positions relatives au centre de la carte
+    int centreX = (jeu->map.taille * LARGEUR_CASE) / 2;
+    int centreY = (jeu->map.taille * HAUTEUR_CASE) / 2;
+    initialiser_zombies_autour_position(10, centreX, centreY, 500); // 500 pixels autour du centre
+    
     return 1;
 }
 
@@ -225,6 +231,22 @@ void appliquerFiltreCouleur(SDL_Renderer *renderer, SDL_Texture *texture, Uint8 
     SDL_SetTextureColorMod(texture, r, g, b);
 }
 
+
+// Modifier la fonction majRendu pour qu'elle soit plus simple
+void dessinerBarreDeVie(SDL_Renderer* renderer, int x, int y, int largeur, int hauteur, int vie_actuelle, int vie_max) {
+    SDL_Rect fond = { x, y, largeur, hauteur };
+    SDL_Rect barre = { x, y, (int)((double)largeur * vie_actuelle / vie_max), hauteur };
+
+    // Dessiner le fond de la barre de vie (rouge)
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    SDL_RenderFillRect(renderer, &fond);
+
+    // Dessiner la barre de vie (verte)
+    SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+    SDL_RenderFillRect(renderer, &barre);
+}
+
+
 void majRendu(Jeu *jeu) {
     // Clear avec noir
     SDL_SetRenderDrawColor(jeu->renderer, 0, 0, 0, 255);
@@ -278,6 +300,53 @@ void majRendu(Jeu *jeu) {
     const Uint8* state = SDL_GetKeyboardState(NULL);
     mettreAJourPersonnage(state);
     dessinerPersonnage(jeu->renderer, jeu->largeurEcran / 2 - 16, jeu->hauteurEcran / 2 - 24);
+    dessinerBarreDeVie(jeu->renderer, jeu->largeurEcran / 2 - 16, jeu->hauteurEcran / 2 - 32, 32, 5, obtenirViePersonnage(), 100);
+
+    // Mettre à jour et rendre les zombies
+    int centreEcranX = jeu->largeurEcran / 2;
+    int centreEcranY = jeu->hauteurEcran / 2;
+    
+    // Position réelle du joueur sur la carte
+    int joueurCarteX = centreEcranX - jeu->carteX;
+    int joueurCarteY = centreEcranY - jeu->carteY;
+    
+    mettre_a_jour_zombies(joueurCarteX, joueurCarteY);
+    
+    SDL_Texture* zombieTexture = obtenirTexture(jeu->renderer, "./assets/zombies/zombies_spritesheet.png");
+    if (zombieTexture) {
+        for (int i = 0; i < nombre_zombies; i++) {
+            int zombieEcranX = zombies[i]->x - joueurCarteX + centreEcranX;
+            int zombieEcranY = zombies[i]->y - joueurCarteY + centreEcranY;
+            
+            // Vérifier les collisions avec le personnage en utilisant les coordonnées de la carte
+            int dx = zombies[i]->x - joueurCarteX;
+            int dy = zombies[i]->y - joueurCarteY;
+            float distance = sqrt(dx * dx + dy * dy);
+            
+            if (distance < 32) { // Si le zombie est proche du personnage
+                subirDegatsPersonnage(zombies[i]->puissance_attaque);
+                logMessage("Contact avec zombie! Distance: %f", distance);
+            }
+
+            // Rendu du zombie
+            SDL_Rect srcRect = {
+                zombies[i]->currentFrame * zombies[i]->frameWidth,
+                zombies[i]->direction * zombies[i]->frameHeight,
+                zombies[i]->frameWidth,
+                zombies[i]->frameHeight
+            };
+            
+            SDL_Rect destRect = { 
+                zombieEcranX, 
+                zombieEcranY, 
+                zombies[i]->frameWidth, 
+                zombies[i]->frameHeight 
+            };
+            
+            SDL_RenderCopy(jeu->renderer, zombieTexture, &srcRect, &destRect);
+            dessinerBarreDeVie(jeu->renderer, zombieEcranX, zombieEcranY - 10, 32, 5, zombies[i]->sante, 100);
+        }
+    }
 
     SDL_RenderPresent(jeu->renderer);
 }
