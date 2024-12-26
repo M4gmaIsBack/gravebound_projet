@@ -31,11 +31,11 @@ int chargerPersonnage(SDL_Renderer* renderer) {
         return 0;
     }
 
-    personnage.frameWidth = 32;  // Largeur d'une frame (extrait de la sprite-sheet)
-    personnage.frameHeight = 32; // Hauteur d'une frame
+    personnage.frameWidth = 32;
+    personnage.frameHeight = 32;
     personnage.currentFrame = 0;
-    personnage.totalFrames = 3;  // 3 frames par direction
-    personnage.direction = 0;    // Par défaut, face vers le bas
+    personnage.totalFrames = 3;
+    personnage.direction = 0;
     personnage.moving = 0;
 
     logMessage("Sprite-sheet du personnage chargée.");
@@ -46,16 +46,16 @@ void mettreAJourPersonnage(const Uint8* state) {
     personnage.moving = 0;
 
     // Détermine la direction selon les touches pressées (ZQSD)
-    if (state[SDL_SCANCODE_W]) { // Haut
+    if (state[SDL_SCANCODE_W]) {
         personnage.direction = 3;
         personnage.moving = 1;
-    } else if (state[SDL_SCANCODE_S]) { // Bas
+    } else if (state[SDL_SCANCODE_S]) {
         personnage.direction = 0;
         personnage.moving = 1;
-    } else if (state[SDL_SCANCODE_A]) { // Gauche
+    } else if (state[SDL_SCANCODE_A]) {
         personnage.direction = 1;
         personnage.moving = 1;
-    } else if (state[SDL_SCANCODE_D]) { // Droite
+    } else if (state[SDL_SCANCODE_D]) { 
         personnage.direction = 2;
         personnage.moving = 1;
     }
@@ -67,7 +67,7 @@ void mettreAJourPersonnage(const Uint8* state) {
             personnage.currentFrame = 0;
         }
     } else {
-        personnage.currentFrame = 1; // Frame "repos" au centre
+        personnage.currentFrame = 1;
     }
 }
 
@@ -78,8 +78,8 @@ void dessinerPersonnage(SDL_Renderer* renderer, int x, int y) {
     }
 
     SDL_Rect srcRect = {
-        personnage.currentFrame * personnage.frameWidth, // Colonne de la frame
-        personnage.direction * personnage.frameHeight,   // Ligne selon la direction
+        personnage.currentFrame * personnage.frameWidth,
+        personnage.direction * personnage.frameHeight,
         personnage.frameWidth, personnage.frameHeight
     };
 
