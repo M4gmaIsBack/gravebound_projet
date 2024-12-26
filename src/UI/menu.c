@@ -4,7 +4,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
-// Charger les assets du menu
 static int chargerAssetsMenu(SDL_Renderer *r, MenuAssets *m) {
     // Charger le background
     SDL_Surface *surface = IMG_Load("./assets/menu/background.jpg");
@@ -41,6 +40,23 @@ static int chargerAssetsMenu(SDL_Renderer *r, MenuAssets *m) {
         }
     }
 
+    // Charger les flèches
+    surface = IMG_Load("./assets/menu/fleche_gauche.png");
+    if (!surface) {
+        logMessage("Erreur load fleche gauche: %s", IMG_GetError());
+        return 0;
+    }
+    m->flecheGauche = SDL_CreateTextureFromSurface(r, surface);
+    SDL_FreeSurface(surface);
+
+    surface = IMG_Load("./assets/menu/fleche_droit.png");
+    if (!surface) {
+        logMessage("Erreur load fleche droite: %s", IMG_GetError());
+        return 0;
+    }
+    m->flecheDroite = SDL_CreateTextureFromSurface(r, surface);
+    SDL_FreeSurface(surface);
+
     logMessage("Assets menu chargés avec succès");
     return 1;
 }
@@ -56,154 +72,101 @@ static void libererAssetsMenu(MenuAssets *m) {
             m->buttons[i] = NULL;
         }
     }
+    if (m->flecheGauche) {
+        SDL_DestroyTexture(m->flecheGauche);
+        m->flecheGauche = NULL;
+    }
+    if (m->flecheDroite) {
+        SDL_DestroyTexture(m->flecheDroite);
+        m->flecheDroite = NULL;
+    }
     logMessage("Assets menu libérés");
 }
 
-// Rendu du menu
 static void renderMenu(SDL_Renderer *r, MenuAssets *m, int sel, int largeurEcran, int hauteurEcran) {
     SDL_RenderClear(r);
 
     SDL_RenderCopy(r, m->background, NULL, NULL);
 
-    // Dimensions des boutons
-    int buttonWidth = 290;
-    int buttonHeight = 80;
+    int buttonWidth = 300;
+    int buttonHeight = 300;
+    int spacing = 70;
 
-    int boutiqueWidth = 150; 
-    int boutiqueHeight = 170;
+    int flecheWidth = 150;
+    int flecheHeight = 150;
 
-    // Positions des boutons
-    SDL_Rect dsts[4];
-    dsts[0] = (SDL_Rect){(largeurEcran - buttonWidth) / 2, hauteurEcran - 180, buttonWidth, buttonHeight}; // Play (centré en bas)
-    dsts[1] = (SDL_Rect){(largeurEcran / 2) - buttonWidth - 200, hauteurEcran - 150, buttonWidth, buttonHeight}; // Settings (plus à gauche)
-    dsts[2] = (SDL_Rect){(largeurEcran / 2) + 200, hauteurEcran - 150, buttonWidth, buttonHeight}; // Credit (plus à droite)
-    dsts[3] = (SDL_Rect){largeurEcran - boutiqueWidth - 30, 30, boutiqueWidth, boutiqueHeight}; // Boutique (en haut à droite)
+    SDL_Rect dstFlecheGauche = {
+        .x = largeurEcran / 2 - buttonWidth * 2 - spacing - flecheWidth,
+        .y = hauteurEcran - 250,
+        .w = flecheWidth,
+        .h = flecheHeight
+    };
+    SDL_Rect dstFlecheDroite = {
+        .x = largeurEcran / 2 + buttonWidth * 2 + spacing,
+        .y = hauteurEcran - 250,
+        .w = flecheWidth,
+        .h = flecheHeight
+    };
 
-    // Rendu des boutons
-    for (int i = 0; i < 4; i++) {
-        SDL_SetTextureColorMod(m->buttons[i], (i == sel) ? 255 : 200, (i == sel) ? 255 : 200, (i == sel) ? 255 : 200);
-        SDL_RenderCopy(r, m->buttons[i], NULL, &dsts[i]);
+    for (int i = -1; i <= 1; i++) {
+        int index = (sel + i + 4) % 4;
+        int x = largeurEcran / 2 + i * (buttonWidth + spacing) - buttonWidth / 2;
+        SDL_Rect dst = {.x = x, .y = hauteurEcran - 300, .w = buttonWidth, .h = buttonHeight};
+
+        SDL_SetTextureColorMod(m->buttons[index], (i == 0) ? 255 : 150, (i == 0) ? 255 : 150, (i == 0) ? 255 : 150);
+        SDL_RenderCopy(r, m->buttons[index], NULL, &dst);
     }
+
+    SDL_RenderCopy(r, m->flecheGauche, NULL, &dstFlecheGauche);
+    SDL_RenderCopy(r, m->flecheDroite, NULL, &dstFlecheDroite);
 
     SDL_RenderPresent(r);
 }
 
-
+// Gestion carousel bouton
 static void gererEvenementsMenu(SDL_Event *e, int *sel, int *quitter, AudioAssets *audio) {
     while (SDL_PollEvent(e)) {
         if (e->type == SDL_QUIT) {
             *quitter = 1;
-        }
-
-        // Gestion des événements clavier
-        else if (e->type == SDL_KEYDOWN) {
+        } else if (e->type == SDL_KEYDOWN) {
             switch (e->key.keysym.sym) {
                 case SDLK_ESCAPE:
                     *quitter = 1;
                     break;
-                case SDLK_RIGHT: 
-                    if (*sel == 0) *sel = 2; 
-                    else if (*sel == 1) *sel = 0; 
-                    else if (*sel == 2) *sel = 1;
+                case SDLK_RIGHT:
+                    *sel = (*sel + 1) % 4;
                     jouerSon(audio->buttonChange);
-                    logMessage("Navigation gauche clavier : %d", *sel);
                     break;
                 case SDLK_LEFT:
-                    if (*sel == 0) *sel = 1;
-                    else if (*sel == 1) *sel = 2;
-                    else if (*sel == 2) *sel = 0;
+                    *sel = (*sel - 1 + 4) % 4;
                     jouerSon(audio->buttonChange);
-                    logMessage("Navigation droite clavier : %d", *sel);
-                    break;
-                case SDLK_UP:
-                    *sel = 3;
-                    jouerSon(audio->buttonChange);
-                    logMessage("Navigation haut clavier : %d", *sel);
-                    break;
-                case SDLK_DOWN:
-                    if (*sel == 3) *sel = 0;
-                    jouerSon(audio->buttonChange);
-                    logMessage("Navigation bas clavier : %d", *sel);
                     break;
                 case SDLK_RETURN:
                     *quitter = 2;
                     jouerSon(audio->buttonSelect);
-                    logMessage("Option validée clavier : %d", *sel);
-                    break;
-            }
-        }
-
-        // Gestion des événements manette
-        else if (e->type == SDL_CONTROLLERBUTTONDOWN) {
-            logMessage("Bouton de la manette appuyé : %d", e->cbutton.button);
-
-            switch (e->cbutton.button) {
-                case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
-                    if (*sel == 0) *sel = 2;
-                    else if (*sel == 1) *sel = 0;
-                    else if (*sel == 2) *sel = 1;
-                    jouerSon(audio->buttonChange);
-                    logMessage("Navigation gauche manette : %d", *sel);
-                    break;
-                case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
-                    if (*sel == 0) *sel = 1;
-                    else if (*sel == 1) *sel = 2;
-                    else if (*sel == 2) *sel = 0;
-                    jouerSon(audio->buttonChange);
-                    logMessage("Navigation droite manette : %d", *sel);
-                    break;
-                case SDL_CONTROLLER_BUTTON_DPAD_UP:
-                    *sel = 3;
-                    jouerSon(audio->buttonChange);
-                    logMessage("Navigation haut manette : %d", *sel);
-                    break;
-                case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
-                    if (*sel == 3) *sel = 0;
-                    jouerSon(audio->buttonChange);
-                    logMessage("Navigation bas manette : %d", *sel);
-                    break;
-                case SDL_CONTROLLER_BUTTON_A:
-                    *quitter = 2;
-                    jouerSon(audio->buttonSelect);
-                    logMessage("Option validée manette : %d", *sel);
                     break;
             }
         }
     }
 }
 
-// Afficher le menu principal
+// Affichage du menu principal
 void afficherMenuPrincipal(Game *game, AudioAssets *audio) {
     int quitter = 0;
     int sel = 0;
     SDL_Event e;
 
-    MenuAssets menuAssets;
+    MenuAssets menuAssets = {0};
 
     if (!chargerAssetsMenu(game->jeu.renderer, &menuAssets)) {
         logMessage("Erreur chargement des assets du menu");
         return;
     }
 
-    logMessage("Affichage du menu principal");
-
     while (!quitter) {
         gererEvenementsMenu(&e, &sel, &quitter, audio);
         renderMenu(game->jeu.renderer, &menuAssets, sel, game->jeu.largeurEcran, game->jeu.hauteurEcran);
     }
 
-    if (quitter == 2 && sel == 0) {
-        logMessage("Lancement du jeu depuis le menu principal");
-        game->running = 1;
-        if (!chargerCarte(&game->jeu)) {
-            logMessage("Erreur lors du chargement de la carte !");
-            game->running = 0;
-        }
-    } else {
-        logMessage("Option sélectionnée : %d", sel);
-        game->running = 0;
-    }
-
     libererAssetsMenu(&menuAssets);
-    logMessage("Fin de la fonction afficherMenuPrincipal");
 }
