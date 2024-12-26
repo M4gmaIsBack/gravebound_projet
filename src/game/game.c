@@ -23,6 +23,7 @@ void bouclePrincipale(Game *game) {
 
     logMessage("Début de la boucle principale");
     while (game->running) {
+
         while (SDL_PollEvent(&event)) {
 
             if (event.type == SDL_QUIT ||
@@ -42,6 +43,7 @@ void bouclePrincipale(Game *game) {
                 gererDeplacementCarte(&event, &game->jeu);
             }
         }
+
         majRendu(&game->jeu);
 
         SDL_Delay(16);
