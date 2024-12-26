@@ -195,6 +195,30 @@ void chargerTextureChunk(chunk *c, SDL_Renderer *renderer) {
     }
 }
 
+float light_calculator(Jeu *jeu, int i, int j) {
+    float light = 1;
+    if (jeu->map.cases[i][j].region != 5) {
+        for (int k = -10; k < 10 && i + k < jeu->map.taille; k++) {
+            for (int l = -10; l < 10 && j + l < jeu->map.taille; l++) {
+                if (jeu->map.cases[i + k][j + l].region == 5) {
+                    float distance = sqrt(k * k + l * l);
+                    if (distance < 10) {
+                        light += 1 - distance / 10;
+                    } 
+                }
+            }
+        }
+    } else {
+        light = 1.0;
+    }
+    light = fmin(light, 1.0);
+    return light;
+}
+
+void appliquerFiltreCouleur(SDL_Renderer *renderer, SDL_Texture *texture, Uint8 r, Uint8 g, Uint8 b) {
+    SDL_SetTextureColorMod(texture, r, g, b);
+}
+
 void majRendu(Jeu *jeu) {
     SDL_SetRenderDrawColor(jeu->renderer, 0, 0, 0, 255);
     SDL_RenderClear(jeu->renderer);
@@ -211,9 +235,17 @@ void majRendu(Jeu *jeu) {
         for (int j = debutX; j < finX; j++) {
             chunk *currentChunk = &jeu->map.cases[i][j];
 
+            float light = light_calculator(jeu, i, j);
+
             if (!currentChunk->loaded) {
                 chargerTextureChunk(currentChunk, jeu->renderer);
             }
+
+            Uint8 r = jeu->map.cases[i][j].brightness_R * light;
+            Uint8 g = jeu->map.cases[i][j].brightness_G * light;
+            Uint8 b = jeu->map.cases[i][j].brightness_B * light;
+
+            appliquerFiltreCouleur(jeu->renderer, jeu->map.cases[i][j].texture, r, g, b);
 
             SDL_Rect dest = {
                 jeu->carteX + j * LARGEUR_CASE,
