@@ -23,34 +23,25 @@ void bouclePrincipale(Game *game) {
 
     logMessage("Début de la boucle principale");
     while (game->running) {
-        logMessage("Attente des événements SDL");
-
         while (SDL_PollEvent(&event)) {
-            logMessage("Événement détecté : %d", event.type);
 
             if (event.type == SDL_QUIT ||
                 (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE)) {
-                logMessage("Quitter la boucle principale");
                 game->running = 0;
             }
 
             if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_F11) {
-                logMessage("Basculer en mode plein écran");
                 toggleFullscreen(&game->jeu);
             }
 
             // Gestion des deplacements
             if (event.type == SDL_KEYDOWN) {
-                logMessage("Gestion du déplacement clavier");
                 gererDeplacementClavier(&event, &game->jeu);
             }
             if (event.type == SDL_CONTROLLERAXISMOTION) {
-                logMessage("Gestion du déplacement manette");
                 gererDeplacementCarte(&event, &game->jeu);
             }
         }
-
-        logMessage("Mise à jour du rendu");
         majRendu(&game->jeu);
 
         SDL_Delay(16);

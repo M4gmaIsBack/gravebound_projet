@@ -205,46 +205,6 @@ void chargerTextureChunk(chunk *c, SDL_Renderer *renderer) {
     }
 }
 
-// Ajouter cette nouvelle fonction pour la boucle de jeu principale
-void boucleJeu(Jeu *jeu) {
-    SDL_Event event;
-    int running = 1;
-    Uint32 lastTime = SDL_GetTicks();
-    const int targetFPS = 60;
-    const int targetFrameTime = 1000 / targetFPS;
-
-    while (running) {
-        Uint32 startTime = SDL_GetTicks();
-
-        // Gestion des événements
-        while (SDL_PollEvent(&event)) {
-            switch (event.type) {
-                case SDL_QUIT:
-                    running = 0;
-                    break;
-                case SDL_KEYDOWN:
-                    if (event.key.keysym.sym == SDLK_ESCAPE) {
-                        running = 0;
-                    }
-                    break;
-                case SDL_CONTROLLERBUTTONDOWN:
-                case SDL_WINDOWEVENT:
-                    gererInputManette(jeu, &event);
-                    break;
-            }
-        }
-
-        // Mise à jour du jeu et rendu
-        majRendu(jeu);
-
-        // Contrôle du frame rate
-        Uint32 frameTime = SDL_GetTicks() - startTime;
-        if (frameTime < targetFrameTime) {
-            SDL_Delay(targetFrameTime - frameTime);
-        }
-    }
-}
-
 // Modifier la fonction majRendu pour qu'elle soit plus simple
 void majRendu(Jeu *jeu) {
     // Clear avec noir
