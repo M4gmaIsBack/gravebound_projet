@@ -270,15 +270,6 @@ void majRendu(Jeu *jeu) {
                     SDL_SetRenderDrawColor(jeu->renderer, 100, 100, 100, 255);
                     SDL_RenderFillRect(jeu->renderer, &dest);
                 }
-    SDL_Rect dest = {0, 0, LARGEUR_CASE, HAUTEUR_CASE};
-    
-    for (int y = debutY; y < finY; y++) {
-        for (int x = debutX; x < finX; x++) {
-            chunk *currentChunk = &jeu->map.cases[y][x];
-            if (currentChunk && currentChunk->texture) {
-                dest.x = x * LARGEUR_CASE + jeu->carteX;
-                dest.y = y * HAUTEUR_CASE + jeu->carteY;
-                SDL_RenderCopy(jeu->renderer, currentChunk->texture, NULL, &dest);
             }
         }
     }
