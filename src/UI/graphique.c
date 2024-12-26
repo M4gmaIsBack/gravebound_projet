@@ -7,6 +7,9 @@
 #include "../entities/character.h"
 #include "../map/procedural.h"
 
+#define FPS 60
+#define FRAME_DELAY (1000 / FPS)
+
 typedef struct TextureCache {
     char* chemin;
     SDL_Texture* texture;
@@ -142,6 +145,16 @@ int initGraphique(Jeu *jeu) {
     jeu->carteX = -(jeu->map.taille * LARGEUR_CASE / 2) + (jeu->largeurEcran / 2);
     jeu->carteY = -(jeu->map.taille * HAUTEUR_CASE / 2) + (jeu->hauteurEcran / 2);
 
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");  // Pixel art mode
+    SDL_RenderSetLogicalSize(jeu->renderer, jeu->largeurEcran, jeu->hauteurEcran);
+    SDL_SetRenderDrawBlendMode(jeu->renderer, SDL_BLENDMODE_BLEND);
+    
+    // Précharger toutes les textures au démarrage
+    if (!chargerCarte(jeu)) {
+        logMessage("Erreur chargement carte");
+        return 0;
+    }
+
     return 1;
 }
 
@@ -175,73 +188,98 @@ void fermerGraphique(Jeu *jeu) {
 #endif
 
 void chargerTextureChunk(chunk *c, SDL_Renderer *renderer) {
-    if (!c->loaded) {
+    if (!c->loaded && !c->texture) {
         SDL_Surface *surface = IMG_Load(c->texture_path);
         if (!surface) {
-            printf("Erreur de chargement de la texture : %s\n", IMG_GetError());
             return;
         }
 
-        // Créez la texture originale (non modifiée)
+        SDL_SetColorKey(surface, SDL_TRUE, SDL_MapRGB(surface->format, 0, 0, 0));
         c->texture = SDL_CreateTextureFromSurface(renderer, surface);
-        if (!c->texture) {
-            printf("Erreur de création de la texture : %s\n", SDL_GetError());
-            SDL_FreeSurface(surface);
-            return;
-        }
-
         SDL_FreeSurface(surface);
-        c->loaded = 1; // Marquez le chunk comme chargé
+
+        if (c->texture) {
+            SDL_SetTextureBlendMode(c->texture, SDL_BLENDMODE_BLEND);
+            c->loaded = 1;
+        }
     }
 }
 
+// Ajouter cette nouvelle fonction pour la boucle de jeu principale
+void boucleJeu(Jeu *jeu) {
+    SDL_Event event;
+    int running = 1;
+    Uint32 lastTime = SDL_GetTicks();
+    const int targetFPS = 60;
+    const int targetFrameTime = 1000 / targetFPS;
+
+    while (running) {
+        Uint32 startTime = SDL_GetTicks();
+
+        // Gestion des événements
+        while (SDL_PollEvent(&event)) {
+            switch (event.type) {
+                case SDL_QUIT:
+                    running = 0;
+                    break;
+                case SDL_KEYDOWN:
+                    if (event.key.keysym.sym == SDLK_ESCAPE) {
+                        running = 0;
+                    }
+                    break;
+                case SDL_CONTROLLERBUTTONDOWN:
+                case SDL_WINDOWEVENT:
+                    gererInputManette(jeu, &event);
+                    break;
+            }
+        }
+
+        // Mise à jour du jeu et rendu
+        majRendu(jeu);
+
+        // Contrôle du frame rate
+        Uint32 frameTime = SDL_GetTicks() - startTime;
+        if (frameTime < targetFrameTime) {
+            SDL_Delay(targetFrameTime - frameTime);
+        }
+    }
+}
+
+// Modifier la fonction majRendu pour qu'elle soit plus simple
 void majRendu(Jeu *jeu) {
+    // Clear avec noir
     SDL_SetRenderDrawColor(jeu->renderer, 0, 0, 0, 255);
     SDL_RenderClear(jeu->renderer);
 
-    int blocsVisiblesX = jeu->largeurEcran / LARGEUR_CASE + 2;
-    int blocsVisiblesY = jeu->hauteurEcran / HAUTEUR_CASE + 2;
+    // Calculer la zone visible avec une marge plus petite
+    int blocsVisiblesX = (jeu->largeurEcran / LARGEUR_CASE) + 2;
+    int blocsVisiblesY = (jeu->hauteurEcran / HAUTEUR_CASE) + 2;
 
-    int debutX = MAX(0, -jeu->carteX / LARGEUR_CASE);
-    int debutY = MAX(0, -jeu->carteY / HAUTEUR_CASE);
+    int debutX = MAX(0, (-jeu->carteX / LARGEUR_CASE));
+    int debutY = MAX(0, (-jeu->carteY / HAUTEUR_CASE));
     int finX = MIN(jeu->map.taille, debutX + blocsVisiblesX);
     int finY = MIN(jeu->map.taille, debutY + blocsVisiblesY);
 
-    for (int i = debutY; i < finY; i++) {
-        for (int j = debutX; j < finX; j++) {
-            chunk *currentChunk = &jeu->map.cases[i][j];
-
-            if (!currentChunk->loaded) {
-                chargerTextureChunk(currentChunk, jeu->renderer);
-            }
-
-            SDL_Rect dest = {
-                jeu->carteX + j * LARGEUR_CASE,
-                jeu->carteY + i * HAUTEUR_CASE,
-                LARGEUR_CASE,
-                HAUTEUR_CASE
-            };
-
-            if (dest.x + dest.w >= 0 && dest.x < jeu->largeurEcran &&
-                dest.y + dest.h >= 0 && dest.y < jeu->hauteurEcran) {
-                if (currentChunk->texture) {
-                    SDL_RenderCopy(jeu->renderer, currentChunk->texture, NULL, &dest);
-                } else {
-                    SDL_SetRenderDrawColor(jeu->renderer, 100, 100, 100, 255);
-                    SDL_RenderFillRect(jeu->renderer, &dest);
-                }
+    SDL_Rect dest = {0, 0, LARGEUR_CASE, HAUTEUR_CASE};
+    
+    for (int y = debutY; y < finY; y++) {
+        for (int x = debutX; x < finX; x++) {
+            chunk *currentChunk = &jeu->map.cases[y][x];
+            if (currentChunk && currentChunk->texture) {
+                dest.x = x * LARGEUR_CASE + jeu->carteX;
+                dest.y = y * HAUTEUR_CASE + jeu->carteY;
+                SDL_RenderCopy(jeu->renderer, currentChunk->texture, NULL, &dest);
             }
         }
     }
 
+    // Rendu du personnage
     const Uint8* state = SDL_GetKeyboardState(NULL);
     mettreAJourPersonnage(state);
     dessinerPersonnage(jeu->renderer, jeu->largeurEcran / 2 - 16, jeu->hauteurEcran / 2 - 24);
 
     SDL_RenderPresent(jeu->renderer);
 }
-
-
 
 void toggleFullscreen(Jeu *jeu) {
     Uint32 flags = SDL_GetWindowFlags(jeu->window);
@@ -258,11 +296,23 @@ void toggleFullscreen(Jeu *jeu) {
     logMessage("Dimensions mises à jour : %dx%d", jeu->largeurEcran, jeu->hauteurEcran);
 }
 
-
 void gererInputManette(Jeu *jeu, SDL_Event *event) {
-    if (event->type == SDL_CONTROLLERBUTTONDOWN) {
-        if (event->cbutton.button == SDL_CONTROLLER_BUTTON_START) {
-            toggleFullscreen(jeu);
-        }
+    switch(event->type) {
+        case SDL_CONTROLLERBUTTONDOWN:
+            if (event->cbutton.button == SDL_CONTROLLER_BUTTON_START) {
+                toggleFullscreen(jeu);
+            }
+            break;
+        case SDL_WINDOWEVENT:
+            switch (event->window.event) {
+                case SDL_WINDOWEVENT_CLOSE:
+                case SDL_WINDOWEVENT_MINIMIZED:
+                case SDL_WINDOWEVENT_RESTORED:
+                case SDL_WINDOWEVENT_RESIZED:
+                    break;
+                default:
+                    break;
+            }
+            break;
     }
 }
