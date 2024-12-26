@@ -131,8 +131,8 @@ carte genererCarte(carte map) {
             map.cases[i][j].texture_path = map.regions[region];
 
             if ((i - map.taille / 2) * (i - map.taille / 2) + (j - map.taille / 2) * (j - map.taille / 2) <= 50 * 50) {
-                map.cases[i][j].region = 5;
-                map.cases[i][j].texture_path = map.regions[5];
+                map.cases[i][j].region = 2;
+                map.cases[i][j].texture_path = map.regions[2];
             }
         }
     }
