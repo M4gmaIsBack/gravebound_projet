@@ -282,6 +282,9 @@ void majRendu(Jeu *jeu) {
             }
 
             if (jeu->map.cases[i][j].structure.texture_path) {
+
+                appliquerFiltreCouleur(jeu->renderer, jeu->map.cases[i][j].structure.texture, r, g, b);
+
                 SDL_Rect structureDest = {
                     jeu->carteX + j * LARGEUR_CASE + (LARGEUR_CASE - jeu->map.cases[i][j].structure.width),
                     jeu->carteY + i * HAUTEUR_CASE + (HAUTEUR_CASE - jeu->map.cases[i][j].structure.height),
