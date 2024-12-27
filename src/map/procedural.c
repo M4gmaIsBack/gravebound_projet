@@ -134,6 +134,15 @@ carte genererCarte(carte map) {
                 map.cases[i][j].region = 2;
                 map.cases[i][j].texture_path = map.regions[2];
             }
+
+            if (map.cases[i][j].region == 4 && rand() / (float)RAND_MAX < 0.001) {
+                map.cases[i][j].structure.texture_path = "./assets/map/artefacts/tree.png";
+                map.cases[i][j].structure.height = 125;
+                map.cases[i][j].structure.width = 125;
+            } else {
+                map.cases[i][j].structure.texture_path = NULL;
+            }
+
         }
     }
 

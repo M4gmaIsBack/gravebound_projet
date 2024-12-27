@@ -8,9 +8,17 @@
 #define HAUTEUR_CASE 16
 
 typedef struct {
+    char *texture_path;
+    SDL_Texture *texture;
+    int height;
+    int width;
+} structure;
+
+typedef struct {
     int x;
     int y;
     char *texture_path;
+    structure structure;
     SDL_Texture *texture;          // Texture modifiée
     SDL_Texture *originalTexture;  // Texture originale
     int region;
@@ -25,6 +33,8 @@ typedef struct {
     chunk **cases;
     char **regions;
 } carte;
+
+
 
 carte creerCarte(int taille);
 void detruireCarte(carte map);

@@ -76,6 +76,11 @@ int chargerCarte(Jeu* jeu) {
             }
 
             jeu->map.cases[i][j].texture = texture;
+
+            if(jeu->map.cases[i][j].structure.texture_path) {
+                SDL_Texture* structureTexture = obtenirTexture(jeu->renderer, jeu->map.cases[i][j].structure.texture_path);
+                jeu->map.cases[i][j].structure.texture = structureTexture;
+            }
         }
     }
 
@@ -166,6 +171,10 @@ void fermerGraphique(Jeu *jeu) {
         for (int j = 0; j < jeu->map.taille; j++) {
             if (jeu->map.cases[i][j].texture) {
                 SDL_DestroyTexture(jeu->map.cases[i][j].texture);
+            }
+
+            if (jeu->map.cases[i][j].structure.texture) {
+                SDL_DestroyTexture(jeu->map.cases[i][j].structure.texture);
             }
         }
     }
@@ -269,6 +278,23 @@ void majRendu(Jeu *jeu) {
                 } else {
                     SDL_SetRenderDrawColor(jeu->renderer, 100, 100, 100, 255);
                     SDL_RenderFillRect(jeu->renderer, &dest);
+                }
+            }
+
+            if (jeu->map.cases[i][j].structure.texture_path) {
+                SDL_Rect structureDest = {
+                    jeu->carteX + j * LARGEUR_CASE + (LARGEUR_CASE - jeu->map.cases[i][j].structure.width),
+                    jeu->carteY + i * HAUTEUR_CASE + (HAUTEUR_CASE - jeu->map.cases[i][j].structure.height),
+                    jeu->map.cases[i][j].structure.width,
+                    jeu->map.cases[i][j].structure.height
+                };
+
+                // Vérifie si la structure est visible
+                if (structureDest.x + structureDest.w >= 0 && structureDest.x < jeu->largeurEcran &&
+                    structureDest.y + structureDest.h >= 0 && structureDest.y < jeu->hauteurEcran) {
+                    if (jeu->map.cases[i][j].structure.texture) {
+                        SDL_RenderCopy(jeu->renderer, jeu->map.cases[i][j].structure.texture, NULL, &structureDest);
+                    }
                 }
             }
         }
