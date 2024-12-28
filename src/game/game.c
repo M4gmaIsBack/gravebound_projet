@@ -1,5 +1,6 @@
 #include "game.h"
 #include "../ui/graphique.h"
+#include "../game/time.h"
 #include "../controller/controller.h"
 #include "../logs/logging.h"
 
@@ -12,6 +13,15 @@ int initJeu(Game *game) {
         logMessage("Erreur initialisation graphique");
         return 0;
     }
+
+
+
+    if (!init_time(&game->jeu.countdown, (time){12, 0, 0})) {
+        logMessage("Erreur initialisation temps");
+        return 0;
+    }
+
+    printf("Temps initialisé à %d:%d:%d\n", game->jeu.countdown.hour, game->jeu.countdown.minute, game->jeu.countdown.second);
 
     logMessage("Jeu initialisé avec succès");
     return 1;
@@ -42,6 +52,14 @@ void bouclePrincipale(Game *game) {
             if (event.type == SDL_CONTROLLERAXISMOTION) {
                 gererDeplacementCarte(&event, &game->jeu);
             }
+        }
+
+        static Uint32 lastUpdateTime = 0;
+        Uint32 currentTime = SDL_GetTicks();
+        if (currentTime > lastUpdateTime + 1000) {
+            update_time(&game->jeu.countdown);
+            display_time(&game->jeu.countdown);
+            lastUpdateTime = currentTime;
         }
 
         majRendu(&game->jeu);
