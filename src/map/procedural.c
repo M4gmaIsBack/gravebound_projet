@@ -130,10 +130,44 @@ carte genererCarte(carte map) {
             map.cases[i][j].region = region;
             map.cases[i][j].texture_path = map.regions[region];
 
-            if ((i - map.taille / 2) * (i - map.taille / 2) + (j - map.taille / 2) * (j - map.taille / 2) <= 50 * 50) {
-                map.cases[i][j].region = 2;
-                map.cases[i][j].texture_path = map.regions[2];
+            if (i == map.taille / 2 && j == map.taille / 2) {
+                map.cases[i][j].structure.texture_path = "./assets/map/artefacts/base.png";
+                map.cases[i][j].structure.height = 700;
+                map.cases[i][j].structure.width = 700;
+            } else if (map.cases[i][j].region == 4 && rand() / (float)RAND_MAX < 0.0005) {
+                map.cases[i][j].structure.texture_path = "./assets/map/artefacts/tree.png";
+                map.cases[i][j].structure.height = 100;
+                map.cases[i][j].structure.width = 100;
+            } else {
+                map.cases[i][j].structure.texture_path = NULL;
             }
+
+            if(map.cases[i][j].region == 4 && map.cases[i][j].structure.texture_path == NULL && rand() / (float)RAND_MAX < 0.001) {
+
+                char *stones[] = {
+                    "./assets/map/artefacts/rock7_1.png",
+                    "./assets/map/artefacts/rock7_2.png",
+                    "./assets/map/artefacts/rock7_3.png",
+                    "./assets/map/artefacts/rock7_4.png",
+                    "./assets/map/artefacts/rock7_5.png"
+                };
+
+                int stones_size[] = {
+                    64,
+                    64,
+                    32,
+                    32,
+                    16
+                };
+
+                int index = rand() % 5;
+
+
+                map.cases[i][j].structure.texture_path = stones[index];
+                map.cases[i][j].structure.height = stones_size[index];
+                map.cases[i][j].structure.width = stones_size[index];
+            }
+
         }
     }
 

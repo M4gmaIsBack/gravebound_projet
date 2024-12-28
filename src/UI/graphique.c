@@ -77,6 +77,11 @@ int chargerCarte(Jeu* jeu) {
             }
 
             jeu->map.cases[i][j].texture = texture;
+
+            if(jeu->map.cases[i][j].structure.texture_path) {
+                SDL_Texture* structureTexture = obtenirTexture(jeu->renderer, jeu->map.cases[i][j].structure.texture_path);
+                jeu->map.cases[i][j].structure.texture = structureTexture;
+            }
         }
     }
 
@@ -173,6 +178,10 @@ void fermerGraphique(Jeu *jeu) {
             if (jeu->map.cases[i][j].texture) {
                 SDL_DestroyTexture(jeu->map.cases[i][j].texture);
             }
+
+            if (jeu->map.cases[i][j].structure.texture) {
+                SDL_DestroyTexture(jeu->map.cases[i][j].structure.texture);
+            }
         }
     }
 
@@ -248,6 +257,26 @@ void majRendu(Jeu *jeu) {
                 dest.x = x * LARGEUR_CASE + jeu->carteX;
                 dest.y = y * HAUTEUR_CASE + jeu->carteY;
                 SDL_RenderCopy(jeu->renderer, currentChunk->texture, NULL, &dest);
+            }
+
+            if (jeu->map.cases[i][j].structure.texture_path) {
+
+                appliquerFiltreCouleur(jeu->renderer, jeu->map.cases[i][j].structure.texture, r, g, b);
+
+                SDL_Rect structureDest = {
+                    jeu->carteX + j * LARGEUR_CASE + (LARGEUR_CASE - jeu->map.cases[i][j].structure.width),
+                    jeu->carteY + i * HAUTEUR_CASE + (HAUTEUR_CASE - jeu->map.cases[i][j].structure.height),
+                    jeu->map.cases[i][j].structure.width,
+                    jeu->map.cases[i][j].structure.height
+                };
+
+                // Vérifie si la structure est visible
+                if (structureDest.x + structureDest.w >= 0 && structureDest.x < jeu->largeurEcran &&
+                    structureDest.y + structureDest.h >= 0 && structureDest.y < jeu->hauteurEcran) {
+                    if (jeu->map.cases[i][j].structure.texture) {
+                        SDL_RenderCopy(jeu->renderer, jeu->map.cases[i][j].structure.texture, NULL, &structureDest);
+                    }
+                }
             }
         }
     }
