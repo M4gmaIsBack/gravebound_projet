@@ -113,7 +113,7 @@ void deplacer_vers_joueur(Zombie* zombie, int joueur_x, int joueur_y) {
         zombie->moving = 0;
         zombie->currentFrame = 1;
     }
-    printf("Zombie de type %s se déplace vers la position (%d, %d)\n", zombie->type, zombie->x, zombie->y);
+    // printf("Zombie de type %s se déplace vers la position (%d, %d)\n", zombie->type, zombie->x, zombie->y);
 }
 
 void journal_creation_zombie(Zombie* zombie) {
