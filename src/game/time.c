@@ -10,11 +10,13 @@ int init_time(time *countdown, time temps) {
     countdown->hour = temps.hour;
     countdown->minute = temps.minute;
     countdown->second = temps.second;
+    countdown->elapsed_time = 17.5 * 60;
     return 1;
 }
 
 void update_time(time *countdown) {
     countdown->second--;
+    countdown->elapsed_time++;
     if (countdown->second <= 0) {
         countdown->second = 59;
         countdown->minute--;
@@ -30,4 +32,6 @@ void update_time(time *countdown) {
 
 void display_time(time *countdown) {
     printf("Temps restant: %d:%d:%d\n", countdown->hour, countdown->minute, countdown->second);
+    printf("Temps écoulé: %d\n", countdown->elapsed_time);
+    printf("minute: %f\n", fmod(countdown->elapsed_time / 60.0, 24.0));
 }

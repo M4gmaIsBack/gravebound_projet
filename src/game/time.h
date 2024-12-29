@@ -8,6 +8,7 @@ typedef struct {
     int hour;
     int minute;
     int second;
+    int elapsed_time;
 } time;
 
 int init_time(time *countdown, time set_time);

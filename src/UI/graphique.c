@@ -235,7 +235,20 @@ void dessinerBarreDeVie(SDL_Renderer* renderer, int x, int y, int largeur, int h
 }
 
 float light_calculator(Jeu *jeu, int i, int j) {
+    float time = fmod(jeu->countdown.elapsed_time / 60.0, 24.0);
+
     float light = 1;
+
+    if (time > 6 && time < 8) {
+        light = 0.2 + 0.8 * (time - 6) / 2;
+    } else if (time > 18 && time < 20) {
+        light = 1 - 0.8 * (time - 18) / 2;
+    } else if (time >= 8 && time <= 18) {
+        light = 1;
+    } else {
+        light = 0.2;
+    }
+
     if (jeu->map.cases[i][j].region != 5) {
         for (int k = -10; k < 10 && i + k < jeu->map.taille; k++) {
             for (int l = -10; l < 10 && j + l < jeu->map.taille; l++) {
