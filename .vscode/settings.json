@@ -4,7 +4,12 @@
         "time.h": "c",
         "logging.h": "c",
         "character.h": "c",
-        "random": "c"
+        "random": "c",
+        "stdio.h": "c",
+        "procedural.h": "c",
+        "zombies.h": "c",
+        "controller.h": "c",
+        "stdlib.h": "c"
     },
     "makefile.configureOnOpen": false
 }

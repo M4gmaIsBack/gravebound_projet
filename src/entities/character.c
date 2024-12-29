@@ -59,8 +59,6 @@ int chargerPersonnage(SDL_Renderer* renderer) {
 
 void mettreAJourPersonnage(const Uint8* state) {
     personnage.moving = 0;
-    int ancienX = personnage.x;
-    int ancienY = personnage.y;
 
     // Détermine la direction selon les touches pressées (ZQSD)
     if (state[SDL_SCANCODE_W]) {
@@ -155,4 +153,17 @@ void fermerPersonnage() {
         personnage.texture = NULL;
         logMessage("Texture du personnage fermée.");
     }
+}
+
+void dessinerBarreDeVie(SDL_Renderer* renderer, int x, int y, int largeur, int hauteur, int vie_actuelle, int vie_max) {
+    SDL_Rect fond = { x, y, largeur, hauteur };
+    SDL_Rect barre = { x, y, (int)((double)largeur * vie_actuelle / vie_max), hauteur };
+
+    // Dessiner le fond de la barre de vie (rouge)
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    SDL_RenderFillRect(renderer, &fond);
+
+    // Dessiner la barre de vie (verte)
+    SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+    SDL_RenderFillRect(renderer, &barre);
 }
