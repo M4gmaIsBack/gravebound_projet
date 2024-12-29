@@ -4,6 +4,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include "../map/procedural.h"
+#include "../game/time.h"
 
 #define LARGEUR_CASE 16
 #define HAUTEUR_CASE 16
@@ -16,7 +17,8 @@ typedef struct {
     int startX, startY, endX, endY;
     int largeurCarte, hauteurCarte;
     int largeurEcran, hauteurEcran;
-    carte map;                   
+    carte map;
+    time countdown;
 } Jeu;
 
 int initGraphique(Jeu *jeu);

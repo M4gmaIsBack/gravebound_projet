@@ -19,7 +19,8 @@ SRC = $(SRC_DIR)/main.c \
       $(SRC_DIR)/entities/character.c \
       $(SRC_DIR)/entities/zombies.c \
       $(SRC_DIR)/audio/audio.c \
-      $(SRC_DIR)/UI/menu.c
+      $(SRC_DIR)/UI/menu.c \
+      $(SRC_DIR)/game/time.c
 
 
 
