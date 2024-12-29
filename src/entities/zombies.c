@@ -2,9 +2,12 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+#include "../game/game.h"
+#include "../logs/logging.h"
+#include "../entities/character.h"
 
-#define MAX_ZOMBIES 100
-#define ZOMBIE_DISTANCE_MIN 10
 
 Zombie* zombies[MAX_ZOMBIES];
 int nombre_zombies = 0;
@@ -147,5 +150,40 @@ void initialiser_zombies_autour_position(int nombre, int centreX, int centreY, i
 void mettre_a_jour_zombies(int joueur_x, int joueur_y) {
     for (int i = 0; i < nombre_zombies; i++) {
         deplacer_vers_joueur(zombies[i], joueur_x, joueur_y);
+    }
+}
+
+void afficher_zombies(Jeu *jeu, SDL_Texture *zombieTexture, int joueurCarteX, int joueurCarteY, int centreEcranX, int centreEcranY) {
+    for (int i = 0; i < nombre_zombies; i++) {
+        int zombieEcranX = zombies[i]->x - joueurCarteX + centreEcranX;
+        int zombieEcranY = zombies[i]->y - joueurCarteY + centreEcranY;
+
+        // Vérifier les collisions avec le personnage en utilisant les coordonnées de la carte
+        int dx = zombies[i]->x - joueurCarteX;
+        int dy = zombies[i]->y - joueurCarteY;
+        float distance = sqrt(dx * dx + dy * dy);
+
+        if (distance < 32) { // Si le zombie est proche du personnage
+            subirDegatsPersonnage(zombies[i]->puissance_attaque);
+            logMessage("Contact avec zombie! Distance: %f", distance);
+        }
+
+        // Rendu du zombie
+        SDL_Rect srcRect = {
+            zombies[i]->currentFrame * zombies[i]->frameWidth,
+            zombies[i]->direction * zombies[i]->frameHeight,
+            zombies[i]->frameWidth,
+            zombies[i]->frameHeight
+        };
+
+        SDL_Rect destRect = { 
+            zombieEcranX, 
+            zombieEcranY, 
+            zombies[i]->frameWidth, 
+            zombies[i]->frameHeight 
+        };
+
+        SDL_RenderCopy(jeu->renderer, zombieTexture, &srcRect, &destRect);
+        dessinerBarreDeVie(jeu->renderer, zombieEcranX, zombieEcranY - 10, 32, 5, zombies[i]->sante, 100);
     }
 }

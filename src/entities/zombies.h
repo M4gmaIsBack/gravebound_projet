@@ -2,6 +2,13 @@
 #define ZOMBIES_H
 
 #include <stdio.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+
+#include "../game/game.h"
+
+#define MAX_ZOMBIES 100
+#define ZOMBIE_DISTANCE_MIN 10
 
 typedef struct {
     int sante;
@@ -29,12 +36,8 @@ void journal_creation_zombie(Zombie* zombie);
 void initialiser_zombies(int nombre);
 void mettre_a_jour_zombies(int joueur_x, int joueur_y);
 void initialiser_zombies_autour_position(int nombre, int centreX, int centreY, int rayon);
-
+void afficher_zombies(Jeu *jeu, SDL_Texture *zombieTexture, int joueurCarteX, int joueurCarteY, int centreEcranX, int centreEcranY);
 int verifier_collision_zombies(int x, int y, int zombie_actuel);
-#define ZOMBIE_DISTANCE_MIN 32  // Distance minimale entre zombies
 
-void detruire_zombie(int index);
-int est_zombie_vivant(Zombie* zombie);
-void nettoyer_zombies_morts();
 
 #endif // ZOMBIES_H

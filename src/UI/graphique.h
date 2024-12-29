@@ -6,8 +6,19 @@
 #include "../map/procedural.h"
 #include "../game/time.h"
 
+
 #define LARGEUR_CASE 16
 #define HAUTEUR_CASE 16
+#define FPS 60
+#define FRAME_DELAY (1000 / FPS)
+
+#ifndef MAX
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+#endif
+
+#ifndef MIN
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#endif
 
 typedef struct {
     SDL_Window *window; 
@@ -26,8 +37,5 @@ void fermerGraphique(Jeu *jeu);
 int chargerCarte(Jeu *jeu);
 void chargerTextureChunk(chunk *c, SDL_Renderer *renderer);
 void majRendu(Jeu *jeu);
-void toggleFullscreen(Jeu *jeu);
-void gererInputManette(Jeu *jeu, SDL_Event *event);
-void boucleJeu(Jeu *jeu);
 
 #endif

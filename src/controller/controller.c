@@ -71,3 +71,39 @@ void gererDeplacementCarte(SDL_Event *event, Jeu *jeu) {
         }
     }
 }
+
+void gererInputManette(Jeu *jeu, SDL_Event *event) {
+    switch(event->type) {
+        case SDL_CONTROLLERBUTTONDOWN:
+            if (event->cbutton.button == SDL_CONTROLLER_BUTTON_START) {
+                toggleFullscreen(jeu);
+            }
+            break;
+        case SDL_WINDOWEVENT:
+            switch (event->window.event) {
+                case SDL_WINDOWEVENT_CLOSE:
+                case SDL_WINDOWEVENT_MINIMIZED:
+                case SDL_WINDOWEVENT_RESTORED:
+                case SDL_WINDOWEVENT_RESIZED:
+                    break;
+                default:
+                    break;
+            }
+            break;
+    }
+}
+
+void toggleFullscreen(Jeu *jeu) {
+    Uint32 flags = SDL_GetWindowFlags(jeu->window);
+    if (flags & SDL_WINDOW_FULLSCREEN) {
+        SDL_SetWindowFullscreen(jeu->window, 0);
+        logMessage("Basculé en mode fenêtré");
+    } else {
+        SDL_SetWindowFullscreen(jeu->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+        logMessage("Basculé en mode plein écran");
+    }
+
+    // Mettre à jour les dimensions de la fenêtre
+    SDL_GetWindowSize(jeu->window, &jeu->largeurEcran, &jeu->hauteurEcran);
+    logMessage("Dimensions mises à jour : %dx%d", jeu->largeurEcran, jeu->hauteurEcran);
+}
