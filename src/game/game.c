@@ -3,10 +3,13 @@
 #include "../game/time.h"
 #include "../controller/controller.h"
 #include "../logs/logging.h"
+#include "../entities/character.h"
+#include <SDL2/SDL.h>
 
 // Initialise le jeu
 // Retourne 1 si c'est good, 0 en cas d'echec
 int initJeu(Game *game) {
+    logMessage("Initialisation du jeu");
     game->running = 1;
 
     if (!initGraphique(&game->jeu)) {
@@ -14,7 +17,11 @@ int initJeu(Game *game) {
         return 0;
     }
 
-
+    // Vérifier que le renderer n'est pas nul
+    if (!game->jeu.renderer) {
+        logMessage("Renderer est nul après initGraphique");
+        return 0;
+    }
 
     if (!init_time(&game->jeu.countdown, (time){12, 0, 0})) {
         logMessage("Erreur initialisation temps");
@@ -71,6 +78,27 @@ void bouclePrincipale(Game *game) {
 
 // Nettoie les ressources du jeu
 void nettoyerRessources(Game *game) {
+    logMessage("Nettoyage des ressources du jeu");
     fermerManette();
     fermerGraphique(&game->jeu);
+}
+
+void lancerJeu(Game *game) {
+    logMessage("Lancement du jeu");
+
+    // Initialiser le personnage
+    if (!chargerPersonnage(game->jeu.renderer)) {
+        logMessage("Erreur chargement personnage, abandon.");
+        return;
+    }
+
+    logMessage("Personnage chargé avec succès");
+
+    // Boucle principale du jeu
+    game->running = 1;
+    bouclePrincipale(game);
+
+    logMessage("Libération des ressources du personnage");
+    // Libérer les ressources du personnage
+    fermerPersonnage();
 }
