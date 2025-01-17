@@ -5,6 +5,7 @@
 #include "../logs/logging.h"
 #include "../entities/character.h"
 #include <SDL2/SDL.h>
+#include "../entities/zombies.h"
 
 // Initialise le jeu
 // Retourne 1 si c'est good, 0 en cas d'echec
@@ -61,12 +62,25 @@ void bouclePrincipale(Game *game) {
             }
         }
 
-        static Uint32 lastUpdateTime = 0;
-        Uint32 currentTime = SDL_GetTicks();
-        if (currentTime > lastUpdateTime + 1000) {
+        static Uint32 lastUpdateTimeCD = 0;
+        Uint32 currentTimeCD = SDL_GetTicks();
+        if (currentTimeCD > lastUpdateTimeCD + 1000) {
             update_time(&game->jeu.countdown);
             display_time(&game->jeu.countdown);
-            lastUpdateTime = currentTime;
+            lastUpdateTimeCD = currentTimeCD;
+        }
+
+        float time = fmod(game->jeu.countdown.elapsed_time / 60.0, 24.0);
+
+
+        static Uint32 lastUpdateTimeZ = 0;
+        Uint32 currentTimeZ = SDL_GetTicks();
+        if (currentTimeZ > lastUpdateTimeZ + 5000) {
+            if (time > 20 || time < 8) {
+                printf("spawn %d, %d\n", game->jeu.carteX, game->jeu.carteY);
+                spawn_zombies((game->jeu.largeurEcran / 2) - game->jeu.carteX, (game->jeu.hauteurEcran / 2) - game->jeu.carteY , 1000);
+            }
+            lastUpdateTimeZ = currentTimeZ;
         }
 
         majRendu(&game->jeu);

@@ -5,9 +5,9 @@
 #include "../logs/logging.h"
 #include "../controller/controller.h"
 #include "../entities/character.h"
-#include "../entities/zombies.h"
 #include "cache.h"
 #include "map.h"
+#include "../entities/zombies.h"
 
 
 int initGraphique(Jeu *jeu) {
@@ -81,9 +81,9 @@ int initGraphique(Jeu *jeu) {
     }
 
     // Initialiser les zombies avec des positions relatives au centre de la carte
-    int centreX = (jeu->map.taille * LARGEUR_CASE) / 2;
-    int centreY = (jeu->map.taille * HAUTEUR_CASE) / 2;
-    initialiser_zombies_autour_position(10, centreX, centreY, 500); // 500 pixels autour du centre
+    // int centreX = (jeu->map.taille * LARGEUR_CASE) / 2;
+    // int centreY = (jeu->map.taille * HAUTEUR_CASE) / 2;
+    // initialiser_zombies_autour_position(10, centreX, centreY, 500); // 500 pixels autour du centre
     
     return 1;
 }
