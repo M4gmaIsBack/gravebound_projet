@@ -8,7 +8,6 @@
 #include "../logs/logging.h"
 #include "../entities/character.h"
 
-
 Zombie* zombies[MAX_ZOMBIES];
 int nombre_zombies = 0;
 
@@ -30,19 +29,7 @@ Zombie* creer_zombie(int sante, int puissance_attaque, int vitesse, int x, int y
     nouveau_zombie->totalFrames = 3;
     nouveau_zombie->direction = 0;
     nouveau_zombie->moving = 0;
-    journal_creation_zombie(nouveau_zombie);
     return nouveau_zombie;
-}
-
-void attaquer(Zombie* zombie) {
-    if (zombie == NULL) return;
-    printf("Zombie de type %s attaque avec une puissance de %d\n", zombie->type, zombie->puissance_attaque);
-}
-
-void subir_degats(Zombie* zombie, int degats) {
-    if (zombie == NULL) return;
-    zombie->sante -= degats;
-    printf("Zombie de type %s subit %d dégâts, santé restante: %d\n", zombie->type, degats, zombie->sante);
 }
 
 int verifier_collision_zombies(int x, int y, int zombie_actuel) {
@@ -119,37 +106,45 @@ void deplacer_vers_joueur(Zombie* zombie, int joueur_x, int joueur_y) {
     // printf("Zombie de type %s se déplace vers la position (%d, %d)\n", zombie->type, zombie->x, zombie->y);
 }
 
-void journal_creation_zombie(Zombie* zombie) {
-    if (zombie == NULL) return;
-    printf("Création d'un zombie de type %s avec santé: %d, puissance d'attaque: %d, vitesse: %d à la position (%d, %d)\n", 
-           zombie->type, zombie->sante, zombie->puissance_attaque, zombie->vitesse, zombie->x, zombie->y);
+void nettoyer_zombies() {
+    for (int i = 0; i < nombre_zombies; i++) {
+        if (zombies[i] && zombies[i]->sante <= 0) {
+            free(zombies[i]->type);
+            free(zombies[i]);
+            zombies[i] = NULL;
+
+            // Décaler les autres zombies pour combler le vide
+            for (int j = i; j < nombre_zombies - 1; j++) {
+                zombies[j] = zombies[j + 1];
+            }
+            zombies[--nombre_zombies] = NULL;
+        }
+    }
 }
 
-void initialiser_zombies(int nombre) {
-    for (int i = 0; i < nombre && i < MAX_ZOMBIES; i++) {
-        zombies[i] = creer_zombie(100, 10, 2, rand() % 800, rand() % 600, "normal");
-        nombre_zombies++;
+void spawn_zombies(int centreX, int centreY, int rayon) {
+    int nouveaux_zombies = rand() % 5 + 1; // Entre 1 et 5 nouveaux zombies
+    initialiser_zombies_autour_position(nouveaux_zombies, centreX, centreY, rayon);
+}
+
+void mettre_a_jour_zombies(int joueur_x, int joueur_y) {
+    nettoyer_zombies(); // Supprime les zombies morts
+    for (int i = 0; i < nombre_zombies; i++) {
+        deplacer_vers_joueur(zombies[i], joueur_x, joueur_y);
     }
 }
 
 void initialiser_zombies_autour_position(int nombre, int centreX, int centreY, int rayon) {
-    for (int i = 0; i < nombre && i < MAX_ZOMBIES; i++) {
+    for (int i = 0; i < nombre && nombre_zombies < MAX_ZOMBIES; i++) {
         int angleAleatoire = rand() % 360;
-        int distanceAleatoire = rand() % rayon;
-        
+        int distanceAleatoire = rayon + (rand() % 100);
+
         // Convertir coordonnées polaires en cartésiennes
         double angleRad = angleAleatoire * M_PI / 180.0;
         int zombieX = centreX + (int)(cos(angleRad) * distanceAleatoire);
         int zombieY = centreY + (int)(sin(angleRad) * distanceAleatoire);
-        
-        zombies[i] = creer_zombie(100, 10, 2, zombieX, zombieY, "normal");
-        nombre_zombies++;
-    }
-}
 
-void mettre_a_jour_zombies(int joueur_x, int joueur_y) {
-    for (int i = 0; i < nombre_zombies; i++) {
-        deplacer_vers_joueur(zombies[i], joueur_x, joueur_y);
+        zombies[nombre_zombies++] = creer_zombie(100, 10, 2, zombieX, zombieY, "normal");
     }
 }
 
@@ -165,7 +160,7 @@ void afficher_zombies(Jeu *jeu, SDL_Texture *zombieTexture, int joueurCarteX, in
 
         if (distance < 32) { // Si le zombie est proche du personnage
             subirDegatsPersonnage(zombies[i]->puissance_attaque);
-            logMessage("Contact avec zombie! Distance: %f", distance);
+            // logMessage("Contact avec zombie! Distance: %f", distance);
         }
 
         // Rendu du zombie
