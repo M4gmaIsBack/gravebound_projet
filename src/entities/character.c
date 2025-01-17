@@ -1,5 +1,6 @@
 #include "character.h"
 #include "../logs/logging.h"
+#include "../UI/menu_personnage.h"  // Inclure le header pour accéder à la variable globale
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include "zombies.h"
@@ -18,14 +19,20 @@ typedef struct {
     int vie_max;
     int vie_actuelle;
     int force_attaque;
-    int invincibilite;         // Compteur pour l'invincibilité temporaire après avoir subi des d��gâts
+    int invincibilite;         // Compteur pour l'invincibilité temporaire après avoir subi des dégâts
     int vitesse;               // Vitesse de déplacement du personnage
 } Personnage;
 
 Personnage personnage;
 
 int chargerPersonnage(SDL_Renderer* renderer) {
-    SDL_Surface* surface = IMG_Load("./assets/character/spritesheet.png");
+    if (!renderer) {
+        logMessage("ERREUR: renderer est nul dans chargerPersonnage");
+        return 0;
+    }
+
+    logMessage("Chargement du personnage avec la sprite-sheet: %s", cheminSpriteSheetPersonnage);
+    SDL_Surface* surface = IMG_Load(cheminSpriteSheetPersonnage);  // Utiliser la variable globale
     if (!surface) {
         logMessage("Erreur de chargement de la sprite-sheet du personnage: %s", IMG_GetError());
         return 0;
@@ -53,7 +60,7 @@ int chargerPersonnage(SDL_Renderer* renderer) {
     personnage.invincibilite = 0;
     personnage.vitesse = 2; // Initialiser la vitesse de déplacement
 
-    logMessage("Sprite-sheet du personnage chargée.");
+    // logMessage("Sprite-sheet du personnage chargée.");
     return 1;
 }
 

@@ -1,8 +1,13 @@
 #include "menu.h"
+#include "menu_personnage.h"  // Ajout de cette ligne
 #include "../audio/audio.h"
 #include "../logs/logging.h"
+#include "../entities/character.h"  // Ajout de cette ligne
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+
+// Déclaration de la fonction gererClavierMenu
+static void gererClavierMenu(SDL_Event *e, int *sel, int *quitter, Game *game, AudioAssets *audio);
 
 static int chargerAssetsMenu(SDL_Renderer *r, MenuAssets *m) {
     // Charger le background
@@ -57,7 +62,6 @@ static int chargerAssetsMenu(SDL_Renderer *r, MenuAssets *m) {
     m->flecheDroite = SDL_CreateTextureFromSurface(r, surface);
     SDL_FreeSurface(surface);
 
-    logMessage("Assets menu chargés avec succès");
     return 1;
 }
 
@@ -80,7 +84,6 @@ static void libererAssetsMenu(MenuAssets *m) {
         SDL_DestroyTexture(m->flecheDroite);
         m->flecheDroite = NULL;
     }
-    logMessage("Assets menu libérés");
 }
 
 static void renderMenu(SDL_Renderer *r, MenuAssets *m, int sel, int largeurEcran, int hauteurEcran) {
@@ -124,34 +127,45 @@ static void renderMenu(SDL_Renderer *r, MenuAssets *m, int sel, int largeurEcran
 }
 
 // Gestion carousel bouton
-static void gererEvenementsMenu(SDL_Event *e, int *sel, int *quitter, AudioAssets *audio) {
+static void gererEvenementsMenu(SDL_Event *e, int *sel, int *quitter, Game *game, AudioAssets *audio) {
     while (SDL_PollEvent(e)) {
         if (e->type == SDL_QUIT) {
             *quitter = 1;
         } else if (e->type == SDL_KEYDOWN) {
-            switch (e->key.keysym.sym) {
-                case SDLK_ESCAPE:
-                    *quitter = 1;
-                    break;
-                case SDLK_RIGHT:
-                    *sel = (*sel + 1) % 4;
-                    jouerSon(audio->buttonChange);
-                    break;
-                case SDLK_LEFT:
-                    *sel = (*sel - 1 + 4) % 4;
-                    jouerSon(audio->buttonChange);
-                    break;
-                case SDLK_RETURN:
-                    *quitter = 2;
-                    jouerSon(audio->buttonSelect);
-                    break;
-            }
+            gererClavierMenu(e, sel, quitter, game, audio);
         }
+    }
+}
+
+static void gererClavierMenu(SDL_Event *e, int *sel, int *quitter, Game *game, AudioAssets *audio) {
+    switch (e->key.keysym.sym) {
+        case SDLK_ESCAPE:
+            *quitter = 1;
+            break;
+        case SDLK_RIGHT:
+            *sel = (*sel + 1) % 4;
+            jouerSon(audio->buttonChange);
+            break;
+        case SDLK_LEFT:
+            *sel = (*sel - 1 + 4) % 4;
+            jouerSon(audio->buttonChange);
+            break;
+        case SDLK_RETURN:
+            jouerSon(audio->buttonSelect);
+            if (*sel == 0) { // Si le bouton play est sélectionné
+                *quitter = 2; // Indiquer que le jeu doit être lancé
+            } else if (*sel == 3) { // Si le bouton boutique est sélectionné
+                afficherMenuPersonnage(game, audio);
+            } else {
+                *quitter = 2;
+            }
+            break;
     }
 }
 
 // Affichage du menu principal
 void afficherMenuPrincipal(Game *game, AudioAssets *audio) {
+    logMessage("Affichage du menu principal");
     int quitter = 0;
     int sel = 0;
     SDL_Event e;
@@ -164,9 +178,13 @@ void afficherMenuPrincipal(Game *game, AudioAssets *audio) {
     }
 
     while (!quitter) {
-        gererEvenementsMenu(&e, &sel, &quitter, audio);
+        gererEvenementsMenu(&e, &sel, &quitter, game, audio);
         renderMenu(game->jeu.renderer, &menuAssets, sel, game->jeu.largeurEcran, game->jeu.hauteurEcran);
     }
 
     libererAssetsMenu(&menuAssets);
+
+    if (quitter == 2) {
+        lancerJeu(game);  // Garder uniquement le lancement du jeu
+    }
 }
