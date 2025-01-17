@@ -140,10 +140,6 @@ void attaquerZombies() {
         int dx = zombies[i]->x - personnage.x;
         int dy = zombies[i]->y - personnage.y;
         float distance = sqrt(dx * dx + dy * dy);
-        
-        if (distance <= PORTEE_ATTAQUE) {
-            subir_degats(zombies[i], personnage.force_attaque);
-        }
     }
 }
 
