@@ -38,10 +38,6 @@ int main(int argc, char *argv[]) {
 
     afficherMenuPrincipal(&game, &audio);
 
-    if (game.running) {
-        bouclePrincipale(&game);
-    }
-
     libererJeuComplet(&game, &audio);
 
     return 0;

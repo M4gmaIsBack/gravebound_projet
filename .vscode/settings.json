@@ -9,7 +9,9 @@
         "procedural.h": "c",
         "zombies.h": "c",
         "controller.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "sdl_image.h": "c",
+        "game.h": "c"
     },
     "makefile.configureOnOpen": false
 }

@@ -148,6 +148,40 @@ void initialiser_zombies_autour_position(int nombre, int centreX, int centreY, i
     }
 }
 
+void enregistrer_zombies(char *save) {
+    char filepath[100];
+    snprintf(filepath, sizeof(filepath), "./saves/%s/config/zombies.txt", save);
+    FILE *fichier = fopen(filepath, "w");
+    if (fichier == NULL) {
+        logMessage("Erreur ouverture fichier zombies.txt");
+        return;
+    }
+    fprintf(fichier, "%d\n", nombre_zombies);
+    for (int i = 0; i < nombre_zombies; i++) {
+        fprintf(fichier, "%d %d %d %d %d %s\n", zombies[i]->sante, zombies[i]->puissance_attaque, zombies[i]->vitesse, zombies[i]->x, zombies[i]->y, zombies[i]->type);
+    }
+    fclose(fichier);
+}
+
+void charger_zombies(char *save) {
+    char filepath[100];
+    snprintf(filepath, sizeof(filepath), "./saves/%s/config/zombies.txt", save);
+    FILE *fichier = fopen(filepath, "r");
+    if (fichier == NULL) {
+        logMessage("Erreur ouverture fichier zombies.txt");
+        return;
+    }
+    fscanf(fichier, "%d\n", &nombre_zombies);
+    for (int i = 0; i < nombre_zombies; i++) {
+        int sante, puissance_attaque, vitesse, x, y;
+        char type[20];
+        fscanf(fichier, "%d %d %d %d %d %s\n", &sante, &puissance_attaque, &vitesse, &x, &y, type);
+        zombies[i] = creer_zombie(sante, puissance_attaque, vitesse, x, y, type);
+    }
+    fclose(fichier);
+    return;
+}
+
 void afficher_zombies(Jeu *jeu, SDL_Texture *zombieTexture, int joueurCarteX, int joueurCarteY, int centreEcranX, int centreEcranY) {
     for (int i = 0; i < nombre_zombies; i++) {
         int zombieEcranX = zombies[i]->x - joueurCarteX + centreEcranX;

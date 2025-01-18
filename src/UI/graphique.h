@@ -4,7 +4,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include "../map/procedural.h"
-#include "../game/time.h"
+#include "../game/game.h"
 
 
 #define LARGEUR_CASE 16
@@ -20,22 +20,13 @@
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #endif
 
-typedef struct {
-    SDL_Window *window; 
-    SDL_Renderer *renderer;
-    SDL_Texture *carteTexture;
-    int carteX, carteY;
-    int startX, startY, endX, endY;
-    int largeurCarte, hauteurCarte;
-    int largeurEcran, hauteurEcran;
-    carte map;
-    time countdown;
-} Jeu;
+
 
 int initGraphique(Jeu *jeu);
 void fermerGraphique(Jeu *jeu);
 int chargerCarte(Jeu *jeu);
 void chargerTextureChunk(chunk *c, SDL_Renderer *renderer);
 void majRendu(Jeu *jeu);
+void init_carte(Jeu *jeu, char *save);
 
 #endif

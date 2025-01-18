@@ -1,16 +1,14 @@
 #include "menu.h"
-#include "menu_personnage.h"  // Ajout de cette ligne
+#include "menu_personnage.h" 
 #include "../audio/audio.h"
 #include "../logs/logging.h"
-#include "../entities/character.h"  // Ajout de cette ligne
+#include "../entities/character.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
-// Déclaration de la fonction gererClavierMenu
 static void gererClavierMenu(SDL_Event *e, int *sel, int *quitter, Game *game, AudioAssets *audio);
 
 static int chargerAssetsMenu(SDL_Renderer *r, MenuAssets *m) {
-    // Charger le background
     SDL_Surface *surface = IMG_Load("./assets/menu/background.jpg");
     if (!surface) {
         logMessage("Erreur load background: %s", IMG_GetError());
@@ -23,7 +21,6 @@ static int chargerAssetsMenu(SDL_Renderer *r, MenuAssets *m) {
         return 0;
     }
 
-    // Charger les boutons
     const char* paths[4] = {
         "./assets/menu/play.png",
         "./assets/menu/settings.png",
@@ -45,7 +42,6 @@ static int chargerAssetsMenu(SDL_Renderer *r, MenuAssets *m) {
         }
     }
 
-    // Charger les flèches
     surface = IMG_Load("./assets/menu/fleche_gauche.png");
     if (!surface) {
         logMessage("Erreur load fleche gauche: %s", IMG_GetError());
@@ -185,6 +181,7 @@ void afficherMenuPrincipal(Game *game, AudioAssets *audio) {
     libererAssetsMenu(&menuAssets);
 
     if (quitter == 2) {
-        lancerJeu(game);  // Garder uniquement le lancement du jeu
+        char* save = "partie_test";
+        lancerJeu(game, save);  
     }
 }
