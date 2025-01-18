@@ -46,15 +46,13 @@ void chargerTextureChunk(chunk *c, SDL_Renderer *renderer) {
 }
 
 float light_calculator(Jeu *jeu, int i, int j) {
-    float time = fmod(jeu->countdown.elapsed_time / 60.0, 24.0);
-
     float light = 1;
 
-    if (time > 6 && time < 8) {
-        light = 0.2 + 0.8 * (time - 6) / 2;
-    } else if (time > 18 && time < 20) {
-        light = 1 - 0.8 * (time - 18) / 2;
-    } else if (time >= 8 && time <= 18) {
+    if (jeu->countdown.time > 6 && jeu->countdown.time < 8) {
+        light = 0.2 + 0.8 * (jeu->countdown.time - 6) / 2;
+    } else if (jeu->countdown.time > 18 && jeu->countdown.time < 20) {
+        light = 1 - 0.8 * (jeu->countdown.time - 18) / 2;
+    } else if (jeu->countdown.time >= 8 && jeu->countdown.time <= 18) {
         light = 1;
     } else {
         light = 0.2;

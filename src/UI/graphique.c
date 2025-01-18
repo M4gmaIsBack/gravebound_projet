@@ -5,22 +5,13 @@
 #include "../logs/logging.h"
 #include "../controller/controller.h"
 #include "../entities/character.h"
+#include "../map/procedural.h"
 #include "cache.h"
 #include "map.h"
 #include "../entities/zombies.h"
 
 
 int initGraphique(Jeu *jeu) {
-    // Création et génération de la carte
-    jeu->map = creerCarte(3000);
-    jeu->map = genererCarte(jeu->map);
-
-    if (!enregistrerCarte(jeu->map)) {
-        logMessage("Erreur enregistrement carte");
-        return 0;
-    }
-    logMessage("Carte enregistrée");
-
     // Initialisation de SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0) {
         logMessage("Erreur SDL init: %s", SDL_GetError());
@@ -60,48 +51,41 @@ int initGraphique(Jeu *jeu) {
         logMessage("Manette non détectée ou échec d'initialisation");
     }
 
-    // Chargement du personnage
-    if (!chargerPersonnage(jeu->renderer)) {
-        logMessage("Erreur chargement personnage");
-        return 0;
-    }
-
-    // Initialisation des coordonnées de la carte pour centrer la caméra sur le centre de la carte
-    jeu->carteX = -(jeu->map.taille * LARGEUR_CASE / 2) + (jeu->largeurEcran / 2);
-    jeu->carteY = -(jeu->map.taille * HAUTEUR_CASE / 2) + (jeu->hauteurEcran / 2);
-
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");  // Pixel art mode
     SDL_RenderSetLogicalSize(jeu->renderer, jeu->largeurEcran, jeu->hauteurEcran);
     SDL_SetRenderDrawBlendMode(jeu->renderer, SDL_BLENDMODE_BLEND);
-    
-    // Précharger toutes les textures au démarrage
-    if (!chargerCarte(jeu)) {
-        logMessage("Erreur chargement carte");
-        return 0;
-    }
 
-    // Initialiser les zombies avec des positions relatives au centre de la carte
-    // int centreX = (jeu->map.taille * LARGEUR_CASE) / 2;
-    // int centreY = (jeu->map.taille * HAUTEUR_CASE) / 2;
-    // initialiser_zombies_autour_position(10, centreX, centreY, 500); // 500 pixels autour du centre
-    
     return 1;
 }
 
-void fermerGraphique(Jeu *jeu) {
-    for (int i = 0; i < jeu->map.taille; i++) {
-        for (int j = 0; j < jeu->map.taille; j++) {
-            if (jeu->map.cases[i][j].texture) {
-                SDL_DestroyTexture(jeu->map.cases[i][j].texture);
-            }
+void init_carte(Jeu *jeu, char *save) {
+    GenerationParams params = chargerParams(save);
+    jeu->map = creerCarte(params.taille);
+    jeu->map = genererCarte(jeu->map, params);
 
-            if (jeu->map.cases[i][j].structure.texture) {
-                SDL_DestroyTexture(jeu->map.cases[i][j].structure.texture);
-            }
-        }
+    if (!chargerCarte(jeu)) {
+        logMessage("Erreur chargement carte");
+        return;
     }
+}
+
+void fermerGraphique(Jeu *jeu) {
+    free(jeu->map.cases);
+    free(jeu->map.regions);
+
+    logMessage("Textures de la carte libérées");
 
     fermerPersonnage();
+
+    logMessage("texture du personnage libéré");
+
+    nettoyer_zombies();
+
+    logMessage("Zombies nettoyés");
+
+    libererCache();
+
+    logMessage("Cache libéré");
 
     if (jeu->renderer) SDL_DestroyRenderer(jeu->renderer);
     if (jeu->window) SDL_DestroyWindow(jeu->window);

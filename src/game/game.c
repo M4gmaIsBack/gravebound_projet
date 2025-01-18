@@ -5,7 +5,11 @@
 #include "../logs/logging.h"
 #include "../entities/character.h"
 #include <SDL2/SDL.h>
+#include <sys/stat.h>
+#include <errno.h>
 #include "../entities/zombies.h"
+
+
 
 // Initialise le jeu
 // Retourne 1 si c'est good, 0 en cas d'echec
@@ -24,19 +28,12 @@ int initJeu(Game *game) {
         return 0;
     }
 
-    if (!init_time(&game->jeu.countdown, (time){12, 0, 0})) {
-        logMessage("Erreur initialisation temps");
-        return 0;
-    }
-
-    printf("Temps initialisé à %d:%d:%d\n", game->jeu.countdown.hour, game->jeu.countdown.minute, game->jeu.countdown.second);
-
     logMessage("Jeu initialisé avec succès");
     return 1;
 }
 
 // Boucle principale de jeu
-void bouclePrincipale(Game *game) {
+void bouclePrincipale(Game *game, char *save) {
     SDL_Event event;
 
     logMessage("Début de la boucle principale");
@@ -70,13 +67,11 @@ void bouclePrincipale(Game *game) {
             lastUpdateTimeCD = currentTimeCD;
         }
 
-        float time = fmod(game->jeu.countdown.elapsed_time / 60.0, 24.0);
-
 
         static Uint32 lastUpdateTimeZ = 0;
         Uint32 currentTimeZ = SDL_GetTicks();
         if (currentTimeZ > lastUpdateTimeZ + 5000) {
-            if (time > 20 || time < 8) {
+            if (game->jeu.countdown.time > 20 || game->jeu.countdown.time < 8) {
                 printf("spawn %d, %d\n", game->jeu.carteX, game->jeu.carteY);
                 spawn_zombies((game->jeu.largeurEcran / 2) - game->jeu.carteX, (game->jeu.hauteurEcran / 2) - game->jeu.carteY , 1000);
             }
@@ -87,32 +82,56 @@ void bouclePrincipale(Game *game) {
 
         SDL_Delay(16);
     }
+
+    enregistrer_progression(game, save);
     logMessage("Fin de la boucle principale");
+
+
 }
 
 // Nettoie les ressources du jeu
 void nettoyerRessources(Game *game) {
     logMessage("Nettoyage des ressources du jeu");
-    fermerManette();
+
     fermerGraphique(&game->jeu);
+
+    logMessage("Ressources nettoyées");
 }
 
-void lancerJeu(Game *game) {
+void enregistrer_progression(Game *game, char *save) {
+    enregistrer_time(&game->jeu.countdown, save);
+    enregistrer_zombies(save);
+    enregistrer_personnage(game, save);
+}
+
+void charger_progression(Game *game, char *save) {
+    init_carte(&game->jeu, save);
+    init_time(&game->jeu.countdown, (time){12, 0, 0, 0, 0, 17}, save);
+    charger_zombies(save);
+    charger_personnage(game->jeu.renderer, game, save);
+} 
+
+void lancerJeu(Game *game, char *save) {
     logMessage("Lancement du jeu");
 
-    // Initialiser le personnage
-    if (!chargerPersonnage(game->jeu.renderer)) {
-        logMessage("Erreur chargement personnage, abandon.");
+    char filepath[100];
+    sprintf(filepath, "saves/%s", save);
+
+    mkdir(filepath);
+    mkdir(strcat(filepath, "/config"));
+
+    // Vérification que le chemin est un répertoire
+    struct stat st;
+    if (stat(filepath, &st) == -1 || !S_ISDIR(st.st_mode)) {
+        logMessage("Erreur lors de la vérification du répertoire de sauvegarde");
         return;
     }
 
-    logMessage("Personnage chargé avec succès");
+    logMessage("Répertoire de sauvegarde prêt");
+    charger_progression(game, save);
 
-    // Boucle principale du jeu
     game->running = 1;
-    bouclePrincipale(game);
-
-    logMessage("Libération des ressources du personnage");
-    // Libérer les ressources du personnage
-    fermerPersonnage();
+    bouclePrincipale(game, save);
 }
+
+

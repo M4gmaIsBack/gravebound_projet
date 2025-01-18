@@ -34,11 +34,18 @@ typedef struct {
     char **regions;
 } carte;
 
+typedef struct {
+    unsigned int seed;
+    float scale;
+    float amplitude;
+    int taille;
+} GenerationParams;
 
+GenerationParams initGenerationParams();
 
 carte creerCarte(int taille);
-void detruireCarte(carte map);
-carte genererCarte(carte map);
-int enregistrerCarte(carte map);
+carte genererCarte(carte map, GenerationParams params);
+int sauvegarderParams(GenerationParams params, char *save);
+GenerationParams chargerParams(char *save);
 
 #endif

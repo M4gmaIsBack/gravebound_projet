@@ -3,19 +3,22 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include "../game/game.h"
 
-int chargerPersonnage(SDL_Renderer* renderer);
+extern char* SAVE_FILE;
+
 void dessinerPersonnage(SDL_Renderer* renderer, int x, int y);
 void mettreAJourPersonnage(const Uint8* state);
 void obtenirPositionPersonnage(int* x, int* y);
 void fermerPersonnage();
 void dessinerBarreDeVie(SDL_Renderer* renderer, int x, int y, int largeur, int hauteur, int sante, int santeMax);
+void enregistrer_personnage(Game *game, char *save);
+int charger_personnage(SDL_Renderer* renderer, Game *game, char *save);
 
-// Nouvelles fonctions pour le système de combat
 int obtenirViePersonnage();
 void subirDegatsPersonnage(int degats);
 int estPersonnageVivant();
-void attaquerZombies(); // Pour gérer l'attaque du personnage
-#define PORTEE_ATTAQUE 50 // Distance d'attaque du personnage
+void attaquerZombies(); 
+#define PORTEE_ATTAQUE 50 
 
 #endif

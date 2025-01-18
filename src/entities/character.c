@@ -25,7 +25,7 @@ typedef struct {
 
 Personnage personnage;
 
-int chargerPersonnage(SDL_Renderer* renderer) {
+int charger_personnage(SDL_Renderer* renderer, Game *game, char *save) {
     if (!renderer) {
         logMessage("ERREUR: renderer est nul dans chargerPersonnage");
         return 0;
@@ -50,15 +50,24 @@ int chargerPersonnage(SDL_Renderer* renderer) {
     personnage.frameHeight = 32;
     personnage.currentFrame = 0;
     personnage.totalFrames = 3;
-    personnage.direction = 0;
-    personnage.moving = 0;
-    personnage.x = 0; // Initialiser la position x
-    personnage.y = 0; // Initialiser la position y
-    personnage.vie_max = 100;
-    personnage.vie_actuelle = 100;
-    personnage.force_attaque = 25;
-    personnage.invincibilite = 0;
-    personnage.vitesse = 2; // Initialiser la vitesse de déplacement
+
+    char filepath[100];
+    snprintf(filepath, sizeof(filepath), "./saves/%s/config/personnages.txt", save);
+    FILE *fichier = fopen(filepath, "r");
+    if (fichier == NULL || (fscanf(fichier, "%d %d %d %d %d %d %d %d %d %d %d\n", &personnage.x, &personnage.y, &personnage.vie_max, &personnage.vie_actuelle, &personnage.force_attaque, &personnage.invincibilite, &personnage.vitesse, &personnage.direction, &personnage.moving, &game->jeu.carteX, &game->jeu.carteY) != 11)) {
+        personnage.direction = 0;
+        personnage.moving = 0;
+        personnage.x = 0; // Initialiser la position x
+        personnage.y = 0; // Initialiser la position y
+        personnage.vie_max = 100;
+        personnage.vie_actuelle = 100;
+        personnage.force_attaque = 25;
+        personnage.invincibilite = 0;
+        personnage.vitesse = 2;
+
+        game->jeu.carteX = -(game->jeu.map.taille * LARGEUR_CASE / 2) + (game->jeu.largeurEcran / 2);
+        game->jeu.carteY = -(game->jeu.map.taille * HAUTEUR_CASE / 2) + (game->jeu.hauteurEcran / 2);
+    }
 
     // logMessage("Sprite-sheet du personnage chargée.");
     return 1;
@@ -169,4 +178,16 @@ void dessinerBarreDeVie(SDL_Renderer* renderer, int x, int y, int largeur, int h
     // Dessiner la barre de vie (verte)
     SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
     SDL_RenderFillRect(renderer, &barre);
+}
+
+void enregistrer_personnage(Game *game, char *save) {
+    char filepath[100];
+    snprintf(filepath, sizeof(filepath), "./saves/%s/config/personnages.txt", save);
+    FILE *fichier = fopen(filepath, "w");
+    if (fichier == NULL) {
+        logMessage("Erreur ouverture fichier personnage.txt");
+        return;
+    }
+    fprintf(fichier, "%d %d %d %d %d %d %d %d %d %d %d\n", personnage.x, personnage.y, personnage.vie_max, personnage.vie_actuelle, personnage.force_attaque, personnage.invincibilite, personnage.vitesse, personnage.direction, personnage.moving, game->jeu.carteX, game->jeu.carteY);
+    fclose(fichier);
 }

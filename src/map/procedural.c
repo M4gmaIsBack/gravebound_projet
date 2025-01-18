@@ -8,7 +8,6 @@
 #define GRID_SIZE 32
 #define AMPLITUDE 1.75
 
-
 float dotGridGradient(int ix, int iy, float x, float y, float gradients[GRID_SIZE][GRID_SIZE][2]) {
     float dx = x - (float)ix;
     float dy = y - (float)iy;
@@ -107,8 +106,8 @@ float noiseToBrightness(float value) {
     return 200 + value * 50;
 }
 
-carte genererCarte(carte map) {
-    srand(time(NULL));
+carte genererCarte(carte map, GenerationParams params) {
+    srand(params.seed);
 
     // Génération des gradients pour le bruit
     float gradients[GRID_SIZE][GRID_SIZE][2];
@@ -117,8 +116,8 @@ carte genererCarte(carte map) {
     for (int i = 0; i < map.taille; i++) {
         for (int j = 0; j < map.taille; j++) {
             // Applique le bruit simplifié à chaque case
-            float x = i * SCALE;
-            float y = j * SCALE;
+            float x = i * params.scale;
+            float y = j * params.scale;
             float noise = simpleNoise(x, y, gradients);
 
             // Convertit le bruit en une région
@@ -142,7 +141,7 @@ carte genererCarte(carte map) {
                 map.cases[i][j].structure.texture_path = NULL;
             }
 
-            if(map.cases[i][j].region == 4 && map.cases[i][j].structure.texture_path == NULL && rand() / (float)RAND_MAX < 0.001) {
+            if (map.cases[i][j].region == 4 && map.cases[i][j].structure.texture_path == NULL && rand() / (float)RAND_MAX < 0.001) {
 
                 char *stones[] = {
                     "./assets/map/artefacts/rock7_1.png",
@@ -162,36 +161,66 @@ carte genererCarte(carte map) {
 
                 int index = rand() % 5;
 
-
                 map.cases[i][j].structure.texture_path = stones[index];
                 map.cases[i][j].structure.height = stones_size[index];
                 map.cases[i][j].structure.width = stones_size[index];
             }
-
         }
     }
 
     return map;
 }
 
-void afficherCarte(carte map) {
-    for (int i = 0; i < map.taille; i++) {
-        for (int j = 0; j < map.taille; j++) {
-            printf("%d ", map.cases[i][j].region);
-        }
-        printf("\n");
-    }
+GenerationParams initGenerationParams() {
+    GenerationParams params;
+    params.seed = time(NULL);
+    params.scale = 0.004f;
+    params.amplitude = 1.75;
+    params.taille = 1000;
+    return params;
 }
 
-int enregistrerCarte(carte map) {
-    FILE *fichier = fopen("./assets/map/seed.txt", "w");
-    for (int i = 0; i < map.taille; i++) {
-        for (int j = 0; j < map.taille; j++) {
-            fprintf(fichier, "%d ", map.cases[i][j].region);
-        }
-        fprintf(fichier, "\n");
+int sauvegarderParams(GenerationParams params, char *save) {
+    char filepath[100];
+    snprintf(filepath, sizeof(filepath), "./saves/%s/config/seed.txt", save);
+    FILE *file = fopen(filepath, "w");
+    if (!file) {
+        printf("Erreur lors de l'ouverture du fichier");
+        return 0;
     }
-    fclose(fichier);
 
+    fprintf(file, "%u\n%f\n%f\n%d", params.seed, params.scale, params.amplitude, params.taille);
+    fclose(file);
     return 1;
+}
+
+GenerationParams chargerParams(char *save) {
+
+    GenerationParams params;
+
+    char filepath[100];
+    snprintf(filepath, sizeof(filepath), "./saves/%s/config/seed.txt", save);
+    FILE *file = fopen(filepath, "r");
+    if (!file) {
+        printf("Pas de seed trouvé, nouvelle génération");
+        params = initGenerationParams();
+
+        if (!sauvegarderParams(params, save)) {
+            printf("Erreur lors de la sauvegarde des paramètres");
+        }
+
+        printf("seed: %u, scale: %f, amplitude: %f, taille: %d\n", params.seed, params.scale, params.amplitude, params.taille);
+        return params;
+    }
+
+    if (fscanf(file, "%u\n%f\n%f\n%d", &params.seed, &params.scale, &params.amplitude, &params.taille) != 4) {
+        printf("Erreur lors de la lecture des paramètres");
+        fclose(file);
+        return params;
+    }
+
+    fclose(file);
+
+    printf("seed: %u, scale: %f, amplitude: %f, taille: %d\n", params.seed, params.scale, params.amplitude, params.taille);
+    return params;
 }

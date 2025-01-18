@@ -4,15 +4,13 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
-typedef struct {
-    int hour;
-    int minute;
-    int second;
-    int elapsed_time;
-} time;
+#include "../game/game.h"
 
-int init_time(time *countdown, time set_time);
+extern char* SAVE_FILE;
+
+int init_time(time *countdown, time set_time, char *save);
 void update_time(time *countdown);
 void display_time(time *countdown);
+void enregistrer_time(time *countdown, char *save);
 
 #endif

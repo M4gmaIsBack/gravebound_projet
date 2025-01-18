@@ -1,7 +1,28 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "../ui/graphique.h"
+#include "../map/procedural.h"
+
+typedef struct {
+    int hour;
+    int minute;
+    int second;
+    int elapsed_time;
+    float time;
+    float OFFSET;
+} time;
+
+typedef struct {
+    SDL_Window *window; 
+    SDL_Renderer *renderer;
+    SDL_Texture *carteTexture;
+    int carteX, carteY;
+    int startX, startY, endX, endY;
+    int largeurCarte, hauteurCarte;
+    int largeurEcran, hauteurEcran;
+    carte map;
+    time countdown;
+} Jeu;
 
 typedef struct {
     int running;
@@ -9,9 +30,11 @@ typedef struct {
 } Game;
 
 int initJeu(Game *game);
-void bouclePrincipale(Game *game);
+void bouclePrincipale(Game *game, char *save);
 void nettoyerRessources(Game *game);
 void toggleFullscreen(Jeu *jeu);
-void lancerJeu(Game *game);  // Déclaration de la fonction lancerJeu
+void lancerJeu(Game *game, char *save);
+void enregistrer_progression(Game *game, char *save);
+void charger_progression(Game *game, char *save);
 
 #endif
