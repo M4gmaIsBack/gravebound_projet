@@ -5,6 +5,7 @@
 #include <SDL2/SDL_image.h>
 #include "../map/procedural.h"
 #include "../game/game.h"
+#include "../entities/character.h"
 
 
 #define LARGEUR_CASE 16

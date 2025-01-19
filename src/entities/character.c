@@ -1,41 +1,26 @@
 #include "character.h"
 #include "../logs/logging.h"
-#include "../UI/menu_personnage.h"  // Inclure le header pour accéder à la variable globale
+#include "../UI/menu_personnage.h" 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include "zombies.h"
 
-// Structure pour le personnage
-typedef struct {
-    SDL_Texture* texture;      // Texture du personnage
-    int frameWidth;            // Largeur d'une frame
-    int frameHeight;           // Hauteur d'une frame
-    int currentFrame;          // Frame actuelle
-    int totalFrames;           // Nombre de frames par animation
-    int direction;             // Direction actuelle (0 = bas, 1 = gauche, 2 = droite, 3 = haut)
-    int moving;                // Indique si le personnage est en mouvement
-    int x;                     // Position x du personnage
-    int y;                     // Position y du personnage
-    int vie_max;
-    int vie_actuelle;
-    int force_attaque;
-    int invincibilite;         // Compteur pour l'invincibilité temporaire après avoir subi des dégâts
-    int vitesse;               // Vitesse de déplacement du personnage
-} Personnage;
-
 Personnage personnage;
 
-int charger_personnage(SDL_Renderer* renderer, Game *game, char *save) {
+Personnage charger_personnage(SDL_Renderer* renderer, char *save) {
+
+    personnage.direction = -1;  // Initialisation à une valeur impossible pour vérifier si le chargement a réussi
+
     if (!renderer) {
         logMessage("ERREUR: renderer est nul dans chargerPersonnage");
-        return 0;
+        return personnage;
     }
 
     logMessage("Chargement du personnage avec la sprite-sheet: %s", cheminSpriteSheetPersonnage);
-    SDL_Surface* surface = IMG_Load(cheminSpriteSheetPersonnage);  // Utiliser la variable globale
+    SDL_Surface* surface = IMG_Load(cheminSpriteSheetPersonnage); 
     if (!surface) {
         logMessage("Erreur de chargement de la sprite-sheet du personnage: %s", IMG_GetError());
-        return 0;
+        return personnage;
     }
 
     personnage.texture = SDL_CreateTextureFromSurface(renderer, surface);
@@ -43,7 +28,7 @@ int charger_personnage(SDL_Renderer* renderer, Game *game, char *save) {
 
     if (!personnage.texture) {
         logMessage("Erreur de création de la texture du personnage: %s", SDL_GetError());
-        return 0;
+        return personnage;
     }
 
     personnage.frameWidth = 32;
@@ -54,23 +39,21 @@ int charger_personnage(SDL_Renderer* renderer, Game *game, char *save) {
     char filepath[100];
     snprintf(filepath, sizeof(filepath), "./saves/%s/config/personnages.txt", save);
     FILE *fichier = fopen(filepath, "r");
-    if (fichier == NULL || (fscanf(fichier, "%d %d %d %d %d %d %d %d %d %d %d\n", &personnage.x, &personnage.y, &personnage.vie_max, &personnage.vie_actuelle, &personnage.force_attaque, &personnage.invincibilite, &personnage.vitesse, &personnage.direction, &personnage.moving, &game->jeu.carteX, &game->jeu.carteY) != 11)) {
+    if (fichier == NULL || (fscanf(fichier, "%d %d %d %d %d %d %f %f %d %d %f\n", &personnage.x, &personnage.y, &personnage.vie_max, &personnage.vie_actuelle, &personnage.force_attaque, &personnage.invincibilite, &personnage.vitesse, &personnage.vitesse_max, &personnage.direction, &personnage.moving, &personnage.defense) != 11)) {
         personnage.direction = 0;
         personnage.moving = 0;
-        personnage.x = 0; // Initialiser la position x
-        personnage.y = 0; // Initialiser la position y
+        personnage.x = 0; 
+        personnage.y = 0; 
         personnage.vie_max = 100;
         personnage.vie_actuelle = 100;
         personnage.force_attaque = 25;
         personnage.invincibilite = 0;
-        personnage.vitesse = 2;
-
-        game->jeu.carteX = -(game->jeu.map.taille * LARGEUR_CASE / 2) + (game->jeu.largeurEcran / 2);
-        game->jeu.carteY = -(game->jeu.map.taille * HAUTEUR_CASE / 2) + (game->jeu.hauteurEcran / 2);
+        personnage.vitesse = 5;
+        personnage.vitesse_max = 5;
+        personnage.defense = 0;
     }
 
-    // logMessage("Sprite-sheet du personnage chargée.");
-    return 1;
+    return personnage;
 }
 
 void mettreAJourPersonnage(const Uint8* state) {
@@ -180,7 +163,7 @@ void dessinerBarreDeVie(SDL_Renderer* renderer, int x, int y, int largeur, int h
     SDL_RenderFillRect(renderer, &barre);
 }
 
-void enregistrer_personnage(Game *game, char *save) {
+void enregistrer_personnage(char *save) {
     char filepath[100];
     snprintf(filepath, sizeof(filepath), "./saves/%s/config/personnages.txt", save);
     FILE *fichier = fopen(filepath, "w");
@@ -188,6 +171,6 @@ void enregistrer_personnage(Game *game, char *save) {
         logMessage("Erreur ouverture fichier personnage.txt");
         return;
     }
-    fprintf(fichier, "%d %d %d %d %d %d %d %d %d %d %d\n", personnage.x, personnage.y, personnage.vie_max, personnage.vie_actuelle, personnage.force_attaque, personnage.invincibilite, personnage.vitesse, personnage.direction, personnage.moving, game->jeu.carteX, game->jeu.carteY);
+    fprintf(fichier, "%d %d %d %d %d %d %f %f %d %d %f\n", personnage.x, personnage.y, personnage.vie_max, personnage.vie_actuelle, personnage.force_attaque, personnage.invincibilite, personnage.vitesse, personnage.vitesse_max, personnage.direction, personnage.moving, personnage.defense);
     fclose(fichier);
 }

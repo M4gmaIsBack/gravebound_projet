@@ -33,10 +33,13 @@ int initJeu(Game *game) {
 }
 
 // Boucle principale de jeu
-void bouclePrincipale(Game *game, char *save) {
+void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
     SDL_Event event;
 
     logMessage("Début de la boucle principale");
+
+    int skill_selected = 0;
+
     while (game->running) {
 
         while (SDL_PollEvent(&event)) {
@@ -52,10 +55,13 @@ void bouclePrincipale(Game *game, char *save) {
 
             // Gestion des deplacements
             if (event.type == SDL_KEYDOWN) {
-                gererDeplacementClavier(&event, &game->jeu);
+                gererDeplacementClavier(&event, &game->jeu, personnage);
+                skill_selected = skill_selection(&event, game, personnage, skill_selected);      
+                skill_activation(&event, game, personnage, skill_selected);
             }
+
             if (event.type == SDL_CONTROLLERAXISMOTION) {
-                gererDeplacementCarte(&event, &game->jeu);
+                gererDeplacementCarte(&event, &game->jeu, personnage);
             }
         }
 
@@ -63,6 +69,7 @@ void bouclePrincipale(Game *game, char *save) {
         Uint32 currentTimeCD = SDL_GetTicks();
         if (currentTimeCD > lastUpdateTimeCD + 1000) {
             update_time(&game->jeu.countdown);
+            cooldown_skills(personnage);
             display_time(&game->jeu.countdown);
             lastUpdateTimeCD = currentTimeCD;
         }
@@ -72,18 +79,25 @@ void bouclePrincipale(Game *game, char *save) {
         Uint32 currentTimeZ = SDL_GetTicks();
         if (currentTimeZ > lastUpdateTimeZ + 5000) {
             if (game->jeu.countdown.time > 20 || game->jeu.countdown.time < 8) {
-                printf("spawn %d, %d\n", game->jeu.carteX, game->jeu.carteY);
                 spawn_zombies((game->jeu.largeurEcran / 2) - game->jeu.carteX, (game->jeu.hauteurEcran / 2) - game->jeu.carteY , 1000);
             }
             lastUpdateTimeZ = currentTimeZ;
         }
 
+        if (personnage->vitesse > personnage->vitesse_max) {
+            personnage->vitesse -= 0.005;
+        } else if (personnage->vitesse < personnage->vitesse_max) {
+            personnage->vitesse += 0.005;
+        }
+
         majRendu(&game->jeu);
+
+        enregistrer_coordonnees(&game->jeu, save);
 
         SDL_Delay(16);
     }
 
-    enregistrer_progression(game, save);
+    enregistrer_progression(game, save, personnage);
     logMessage("Fin de la boucle principale");
 
 
@@ -98,17 +112,22 @@ void nettoyerRessources(Game *game) {
     logMessage("Ressources nettoyées");
 }
 
-void enregistrer_progression(Game *game, char *save) {
+void enregistrer_progression(Game *game, char *save, Personnage *personnage) {
     enregistrer_time(&game->jeu.countdown, save);
     enregistrer_zombies(save);
-    enregistrer_personnage(game, save);
+    enregistrer_personnage(save);
+    enregistrer_skills(personnage, save);
 }
 
-void charger_progression(Game *game, char *save) {
+Personnage charger_progression(Game *game, char *save) {
     init_carte(&game->jeu, save);
-    init_time(&game->jeu.countdown, (time){12, 0, 0, 0, 0, 17}, save);
+    init_time(&game->jeu.countdown, (time){12, 0, 0, 0, 0, 20}, save);
     charger_zombies(save);
-    charger_personnage(game->jeu.renderer, game, save);
+    charger_coordonnees(&game->jeu, save);
+    Personnage personnage = charger_personnage(game->jeu.renderer, save);
+    charger_skills(&personnage, save);
+
+    return personnage;
 } 
 
 void lancerJeu(Game *game, char *save) {
@@ -128,10 +147,39 @@ void lancerJeu(Game *game, char *save) {
     }
 
     logMessage("Répertoire de sauvegarde prêt");
-    charger_progression(game, save);
+    Personnage personnage = charger_progression(game, save);
+
+    if (personnage.direction == -1) {
+        logMessage("Erreur chargement/initialisation du personnage");
+        return;
+    }
+
 
     game->running = 1;
-    bouclePrincipale(game, save);
+    bouclePrincipale(game, save, &personnage);
 }
 
+void charger_coordonnees(Jeu *jeu, char *save) {
+    char filepath[100];
+    snprintf(filepath, sizeof(filepath), "./saves/%s/config/coord.txt", save);
+    FILE *fichier = fopen(filepath, "r");
+    if (fichier == NULL || (fscanf(fichier, "%d %d", &jeu->carteX, &jeu->carteY) != 2)) {
+        jeu->carteX = -(jeu->map.taille * LARGEUR_CASE / 2) + (jeu->largeurEcran / 2);
+        jeu->carteY = -(jeu->map.taille * HAUTEUR_CASE / 2) + (jeu->hauteurEcran / 2);
+    }
+    if (fichier != NULL) {
+        fclose(fichier);
+    }
+}
 
+void enregistrer_coordonnees(Jeu *jeu, char *save) {
+    char filepath[100];
+    snprintf(filepath, sizeof(filepath), "./saves/%s/config/coord.txt", save);
+    FILE *fichier = fopen(filepath, "w");
+    if (fichier) {
+        fprintf(fichier, "%d %d\n", jeu->carteX, jeu->carteY);
+        fclose(fichier);
+    } else {
+        logMessage("Erreur ouverture fichier coord.txt");
+    }
+}

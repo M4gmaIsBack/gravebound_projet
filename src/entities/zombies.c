@@ -11,7 +11,7 @@
 Zombie* zombies[MAX_ZOMBIES];
 int nombre_zombies = 0;
 
-Zombie* creer_zombie(int sante, int puissance_attaque, int vitesse, int x, int y, const char* type) {
+Zombie* creer_zombie(int sante, int puissance_attaque, float vitesse, float vitesse_max, int x, int y, const char* type) {
     Zombie* nouveau_zombie = (Zombie*)malloc(sizeof(Zombie));
     if (nouveau_zombie == NULL) {
         fprintf(stderr, "Échec de l'allocation de mémoire pour le nouveau zombie\n");
@@ -20,6 +20,7 @@ Zombie* creer_zombie(int sante, int puissance_attaque, int vitesse, int x, int y
     nouveau_zombie->sante = sante;
     nouveau_zombie->puissance_attaque = puissance_attaque;
     nouveau_zombie->vitesse = vitesse;
+    nouveau_zombie->vitesse_max = vitesse;
     nouveau_zombie->x = x;
     nouveau_zombie->y = y;
     nouveau_zombie->type = strdup(type);
@@ -131,6 +132,10 @@ void mettre_a_jour_zombies(int joueur_x, int joueur_y) {
     nettoyer_zombies(); // Supprime les zombies morts
     for (int i = 0; i < nombre_zombies; i++) {
         deplacer_vers_joueur(zombies[i], joueur_x, joueur_y);
+
+        if (zombies[i]->vitesse < zombies[i]->vitesse_max) {
+            zombies[i]->vitesse += 0.005;
+        }
     }
 }
 
@@ -144,7 +149,9 @@ void initialiser_zombies_autour_position(int nombre, int centreX, int centreY, i
         int zombieX = centreX + (int)(cos(angleRad) * distanceAleatoire);
         int zombieY = centreY + (int)(sin(angleRad) * distanceAleatoire);
 
-        zombies[nombre_zombies++] = creer_zombie(100, 10, 2, zombieX, zombieY, "normal");
+        printf("Zombie %d: x=%d, y=%d\n", i, zombieX, zombieY);
+
+        zombies[nombre_zombies++] = creer_zombie(100, 10, 2, 2, zombieX, zombieY, "normal");
     }
 }
 
@@ -158,7 +165,7 @@ void enregistrer_zombies(char *save) {
     }
     fprintf(fichier, "%d\n", nombre_zombies);
     for (int i = 0; i < nombre_zombies; i++) {
-        fprintf(fichier, "%d %d %d %d %d %s\n", zombies[i]->sante, zombies[i]->puissance_attaque, zombies[i]->vitesse, zombies[i]->x, zombies[i]->y, zombies[i]->type);
+        fprintf(fichier, "%d %d %f %f %d %d %s\n", zombies[i]->sante, zombies[i]->puissance_attaque, zombies[i]->vitesse, zombies[i]->vitesse_max, zombies[i]->x, zombies[i]->y, zombies[i]->type);
     }
     fclose(fichier);
 }
@@ -173,10 +180,11 @@ void charger_zombies(char *save) {
     }
     fscanf(fichier, "%d\n", &nombre_zombies);
     for (int i = 0; i < nombre_zombies; i++) {
-        int sante, puissance_attaque, vitesse, x, y;
+        int sante, puissance_attaque,x, y;
+        float vitesse, vitesse_max;
         char type[20];
-        fscanf(fichier, "%d %d %d %d %d %s\n", &sante, &puissance_attaque, &vitesse, &x, &y, type);
-        zombies[i] = creer_zombie(sante, puissance_attaque, vitesse, x, y, type);
+        fscanf(fichier, "%d %d %f %f %d %d %s\n", &sante, &puissance_attaque, &vitesse, &vitesse_max, &x, &y, type);
+        zombies[i] = creer_zombie(sante, puissance_attaque, vitesse, vitesse_max, x, y, type);
     }
     fclose(fichier);
     return;
