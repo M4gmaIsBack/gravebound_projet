@@ -60,7 +60,7 @@ void enregistrer_time(time *countdown, char *save) {
 }
 
 void display_time(time *countdown) {
-    printf("Temps restant: %d:%d:%d\n", countdown->hour, countdown->minute, countdown->second);
-    printf("Temps écoulé: %d\n", countdown->elapsed_time);
-    printf("heure: %f\n", countdown->time);
+    // printf("Temps restant: %d:%d:%d\n", countdown->hour, countdown->minute, countdown->second);
+    // printf("Temps écoulé: %d\n", countdown->elapsed_time);
+    // printf("heure: %f\n", countdown->time);
 }

@@ -129,11 +129,9 @@ void majRendu(Jeu *jeu) {
     dessinerPersonnage(jeu->renderer, jeu->largeurEcran / 2 - 16, jeu->hauteurEcran / 2 - 24);
     dessinerBarreDeVie(jeu->renderer, jeu->largeurEcran / 2 - 16, jeu->hauteurEcran / 2 - 32, 32, 5, obtenirViePersonnage(), 100);
 
-    // Mettre à jour et rendre les zombies
     int centreEcranX = jeu->largeurEcran / 2;
     int centreEcranY = jeu->hauteurEcran / 2;
     
-    // Position réelle du joueur sur la carte
     int joueurCarteX = centreEcranX - jeu->carteX;
     int joueurCarteY = centreEcranY - jeu->carteY;
     

@@ -13,7 +13,8 @@
 typedef struct {
     int sante;
     int puissance_attaque;
-    int vitesse;
+    float vitesse;
+    float vitesse_max;
     int x;
     int y;
     char* type;
@@ -35,7 +36,7 @@ void afficher_zombies(Jeu *jeu, SDL_Texture *zombieTexture, int joueurCarteX, in
 int verifier_collision_zombies(int x, int y, int zombie_actuel);
 void nettoyer_zombies();
 void spawn_zombies(int centreX, int centreY, int rayon);
-Zombie *creer_zombie(int sante, int puissance_attaque, int vitesse, int x, int y, const char *type);
+Zombie *creer_zombie(int sante, int puissance_attaque, float vitesse, float vitesse_max, int x, int y, const char *type);
 void enregistrer_zombies(char *save);
 void charger_zombies(char *save);
 

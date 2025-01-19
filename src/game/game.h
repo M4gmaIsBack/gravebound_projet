@@ -2,6 +2,8 @@
 #define GAME_H
 
 #include "../map/procedural.h"
+#include "../entities/character.h"
+#include "../entities/skills.h"
 
 typedef struct {
     int hour;
@@ -30,11 +32,13 @@ typedef struct {
 } Game;
 
 int initJeu(Game *game);
-void bouclePrincipale(Game *game, char *save);
+void bouclePrincipale(Game *game, char *save, Personnage *personnage);
 void nettoyerRessources(Game *game);
 void toggleFullscreen(Jeu *jeu);
 void lancerJeu(Game *game, char *save);
-void enregistrer_progression(Game *game, char *save);
-void charger_progression(Game *game, char *save);
+void enregistrer_progression(Game *game, char *save, Personnage *personnage);
+Personnage charger_progression(Game *game, char *save);
+void charger_coordonnees(Jeu *jeu, char *save);
+void enregistrer_coordonnees(Jeu *jeu, char *save);
 
 #endif
