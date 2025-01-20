@@ -151,13 +151,13 @@ void initialiser_zombies_autour_position(int nombre, int centreX, int centreY, i
 
         printf("Zombie %d: x=%d, y=%d\n", i, zombieX, zombieY);
 
-        zombies[nombre_zombies++] = creer_zombie(100, 10, 2, 2, zombieX, zombieY, "normal");
+        zombies[nombre_zombies++] = creer_zombie(config.zombies.max_health[vague], config.zombies.max_damage[vague], config.zombies.max_speed[vague], config.zombies.max_speed[vague], zombieX, zombieY, "normal");
     }
 }
 
 void enregistrer_zombies(char *save) {
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/zombies.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/zombies.txt", save);
     FILE *fichier = fopen(filepath, "w");
     if (fichier == NULL) {
         logMessage("Erreur ouverture fichier zombies.txt");
@@ -172,7 +172,7 @@ void enregistrer_zombies(char *save) {
 
 void charger_zombies(char *save) {
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/zombies.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/zombies.txt", save);
     FILE *fichier = fopen(filepath, "r");
     if (fichier == NULL) {
         logMessage("Erreur ouverture fichier zombies.txt");

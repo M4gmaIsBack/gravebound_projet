@@ -24,7 +24,8 @@ SRC = $(SRC_DIR)/main.c \
       $(SRC_DIR)/game/time.c \
       $(SRC_DIR)/UI/menu_personnage.c \
       $(SRC_DIR)/UI/map.c \
-      $(SRC_DIR)/entities/skills.c 
+      $(SRC_DIR)/entities/skills.c \
+      $(SRC_DIR)/game/config.c
 
 
 

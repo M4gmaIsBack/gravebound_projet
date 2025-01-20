@@ -214,27 +214,24 @@ int skill_turtle(Personnage *personnage, int slot_number) {
 }
 
 
-void skill_add(Personnage *personnage, char *nom, int level, int range, int maxExperience, int cooldown, int lastUsed, int damage) {
-    printf("%s %d %d %d %d %d %d\n", nom, level, range, maxExperience, cooldown, lastUsed, damage);
+void skill_add(Personnage *personnage, int level, int skill_number) {
     for (int i = 0; i < 10; i++) {
         if (strcmp(personnage->skills[i].name, "") == 0) {
-            strcpy(personnage->skills[i].name, nom);
-            personnage->skills[i].level = level;
-            personnage->skills[i].range = range;
-            personnage->skills[i].maxExperience = maxExperience;
-            personnage->skills[i].cooldown = cooldown;
-            personnage->skills[i].lastUsed = lastUsed;
-            personnage->skills[i].damage = damage;
+            strcpy(personnage->skills[i].name, config.skills.name[skill_number]);
+            personnage->skills[i].level = config.skills.level[skill_number];
+            personnage->skills[i].range = config.skills.range[skill_number];
+            personnage->skills[i].maxExperience = config.skills.maxExperience[skill_number];
+            personnage->skills[i].cooldown = config.skills.cooldown[skill_number];
+            personnage->skills[i].lastUsed = config.skills.lastUsed[skill_number];
+            personnage->skills[i].damage = config.skills.damage[skill_number];
             break;
         }
     }
-
-    logMessage("Compétence %s ajoutée", nom);
 }
 
 void charger_skills(Personnage *personnage, char *save) {
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/skills.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/skills.txt", save);
     FILE *fichier = fopen(filepath, "r");
 
     if (fichier == NULL) {
@@ -253,7 +250,7 @@ void charger_skills(Personnage *personnage, char *save) {
 
 void enregistrer_skills(Personnage *personnage, char *save) {
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/skills.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/skills.txt", save);
     FILE *fichier = fopen(filepath, "w");
 
     if (fichier == NULL) {

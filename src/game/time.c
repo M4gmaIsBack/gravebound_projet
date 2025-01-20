@@ -3,21 +3,20 @@
 #include "../logs/logging.h"
 #include "../game/time.h"
 #include "../UI/graphique.h"
-#include "game.h"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
-int init_time(time *countdown, time temps, char *save) {
+int init_time(time *countdown, char *save) {
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/state.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/state.txt", save);
     FILE *file = fopen(filepath, "r");
     if (file == NULL || fscanf(file, "%d\n%d\n%d\n%d\n%f\n%f", &countdown->elapsed_time, &countdown->hour, &countdown->minute, &countdown->second, &countdown->time, &countdown->OFFSET) != 6) {
-        countdown->hour = temps.hour;
-        countdown->minute = temps.minute;
-        countdown->second = temps.second;
-        countdown->elapsed_time = temps.elapsed_time;
-        countdown->OFFSET = temps.OFFSET;
+        countdown->hour = config.map.start_countdown_hour;
+        countdown->minute = config.map.start_countdown_minute;
+        countdown->second = config.map.start_countdown_second;
+        countdown->elapsed_time = 0;
+        countdown->OFFSET = config.map.start_hour;
     }
     if (file != NULL) {
         fclose(file);
@@ -44,7 +43,7 @@ void update_time(time *countdown) {
 
 void enregistrer_time(time *countdown, char *save) {
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/state.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/state.txt", save);
     FILE *file = fopen(filepath, "w");
     if (file) {
         fprintf(file, "%d\n", countdown->elapsed_time);

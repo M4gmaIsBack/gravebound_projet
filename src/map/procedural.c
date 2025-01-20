@@ -174,15 +174,15 @@ carte genererCarte(carte map, GenerationParams params) {
 GenerationParams initGenerationParams() {
     GenerationParams params;
     params.seed = time(NULL);
-    params.scale = 0.004f;
-    params.amplitude = 1.75;
-    params.taille = 1000;
+    params.scale = config.map.scale;//0.004f;
+    params.amplitude = config.map.amplitude;//1.75;
+    params.taille = config.map.map_size;//1000;
     return params;
 }
 
 int sauvegarderParams(GenerationParams params, char *save) {
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/seed.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/seed.txt", save);
     FILE *file = fopen(filepath, "w");
     if (!file) {
         printf("Erreur lors de l'ouverture du fichier");
@@ -199,7 +199,7 @@ GenerationParams chargerParams(char *save) {
     GenerationParams params;
 
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/seed.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/seed.txt", save);
     FILE *file = fopen(filepath, "r");
     if (!file) {
         printf("Pas de seed trouvé, nouvelle génération");

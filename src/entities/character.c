@@ -4,6 +4,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include "zombies.h"
+#include "../game/config.h"
 
 Personnage personnage;
 
@@ -37,20 +38,20 @@ Personnage charger_personnage(SDL_Renderer* renderer, char *save) {
     personnage.totalFrames = 3;
 
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/personnages.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/personnages.txt", save);
     FILE *fichier = fopen(filepath, "r");
     if (fichier == NULL || (fscanf(fichier, "%d %d %d %d %d %d %f %f %d %d %f\n", &personnage.x, &personnage.y, &personnage.vie_max, &personnage.vie_actuelle, &personnage.force_attaque, &personnage.invincibilite, &personnage.vitesse, &personnage.vitesse_max, &personnage.direction, &personnage.moving, &personnage.defense) != 11)) {
         personnage.direction = 0;
         personnage.moving = 0;
         personnage.x = 0; 
         personnage.y = 0; 
-        personnage.vie_max = 100;
-        personnage.vie_actuelle = 100;
-        personnage.force_attaque = 25;
+        personnage.vie_max = config.personnage.vie_max[0];
+        personnage.vie_actuelle = config.personnage.vie_max[0];
+        personnage.force_attaque = config.personnage.force_attaque_max[0];
         personnage.invincibilite = 0;
-        personnage.vitesse = 5;
-        personnage.vitesse_max = 5;
-        personnage.defense = 0;
+        personnage.vitesse = config.personnage.vitesse_max[0];
+        personnage.vitesse_max = config.personnage.vitesse_max[0];
+        personnage.defense = config.personnage.defense_max[0];
     }
 
     return personnage;
@@ -165,7 +166,7 @@ void dessinerBarreDeVie(SDL_Renderer* renderer, int x, int y, int largeur, int h
 
 void enregistrer_personnage(char *save) {
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/personnages.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/personnages.txt", save);
     FILE *fichier = fopen(filepath, "w");
     if (fichier == NULL) {
         logMessage("Erreur ouverture fichier personnage.txt");

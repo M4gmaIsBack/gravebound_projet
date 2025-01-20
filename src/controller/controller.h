@@ -6,6 +6,7 @@
 #include "../controller/controller.h"
 #include "../entities/character.h"
 #include "../entities/skills.h"
+#include "../game/config.h"
 
 #define JOYSTICK_ZONE_MORTE 4000
 #define JOYSTICK_SENSIBILITE 0.01f

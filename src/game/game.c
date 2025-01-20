@@ -9,7 +9,7 @@
 #include <errno.h>
 #include "../entities/zombies.h"
 
-
+int vague = 1;
 
 // Initialise le jeu
 // Retourne 1 si c'est good, 0 en cas d'echec
@@ -71,15 +71,22 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
             update_time(&game->jeu.countdown);
             cooldown_skills(personnage);
             display_time(&game->jeu.countdown);
+
+            int temp = (20 - game->jeu.countdown.OFFSET) * 60; //temps avant la première nuit (20h)
+
+            if (game->jeu.countdown.elapsed_time > temp) {
+                vague = 1 + (game->jeu.countdown.elapsed_time - 20 * 60) / 24 * 60; //tout les jours à 20h +1 vague
+            }
+
             lastUpdateTimeCD = currentTimeCD;
         }
 
 
         static Uint32 lastUpdateTimeZ = 0;
         Uint32 currentTimeZ = SDL_GetTicks();
-        if (currentTimeZ > lastUpdateTimeZ + 5000) {
+        if (currentTimeZ > lastUpdateTimeZ + config.zombies.spawn_delay[vague]) { //5000
             if (game->jeu.countdown.time > 20 || game->jeu.countdown.time < 8) {
-                spawn_zombies((game->jeu.largeurEcran / 2) - game->jeu.carteX, (game->jeu.hauteurEcran / 2) - game->jeu.carteY , 1000);
+                spawn_zombies((game->jeu.largeurEcran / 2) - game->jeu.carteX, (game->jeu.hauteurEcran / 2) - game->jeu.carteY , config.zombies.spawn_radius[vague]); //1000
             }
             lastUpdateTimeZ = currentTimeZ;
         }
@@ -121,7 +128,7 @@ void enregistrer_progression(Game *game, char *save, Personnage *personnage) {
 
 Personnage charger_progression(Game *game, char *save) {
     init_carte(&game->jeu, save);
-    init_time(&game->jeu.countdown, (time){12, 0, 0, 0, 0, 20}, save);
+    init_time(&game->jeu.countdown, save);
     charger_zombies(save);
     charger_coordonnees(&game->jeu, save);
     Personnage personnage = charger_personnage(game->jeu.renderer, save);
@@ -137,12 +144,13 @@ void lancerJeu(Game *game, char *save) {
     sprintf(filepath, "saves/%s", save);
 
     mkdir(filepath);
-    mkdir(strcat(filepath, "/config"));
+    sprintf(filepath, "saves/%s/config", save);
+    mkdir(filepath);
+    sprintf(filepath, "saves/%s/source", save);
+    mkdir(filepath);
 
-    // Vérification que le chemin est un répertoire
-    struct stat st;
-    if (stat(filepath, &st) == -1 || !S_ISDIR(st.st_mode)) {
-        logMessage("Erreur lors de la vérification du répertoire de sauvegarde");
+    if (!charger_config(save)) {
+        logMessage("Erreur chargement config");
         return;
     }
 
@@ -161,7 +169,7 @@ void lancerJeu(Game *game, char *save) {
 
 void charger_coordonnees(Jeu *jeu, char *save) {
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/coord.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/coord.txt", save);
     FILE *fichier = fopen(filepath, "r");
     if (fichier == NULL || (fscanf(fichier, "%d %d", &jeu->carteX, &jeu->carteY) != 2)) {
         jeu->carteX = -(jeu->map.taille * LARGEUR_CASE / 2) + (jeu->largeurEcran / 2);
@@ -174,7 +182,7 @@ void charger_coordonnees(Jeu *jeu, char *save) {
 
 void enregistrer_coordonnees(Jeu *jeu, char *save) {
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/coord.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/coord.txt", save);
     FILE *fichier = fopen(filepath, "w");
     if (fichier) {
         fprintf(fichier, "%d %d\n", jeu->carteX, jeu->carteY);
