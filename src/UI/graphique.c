@@ -6,6 +6,7 @@
 #include "../controller/controller.h"
 #include "../entities/character.h"
 #include "../map/procedural.h"
+#include "../UI/minimap.h"
 #include "cache.h"
 #include "map.h"
 #include "../entities/zombies.h"
@@ -123,6 +124,7 @@ void majRendu(Jeu *jeu) {
         }
     }
 
+
     // Rendu du personnage
     const Uint8* state = SDL_GetKeyboardState(NULL);
     mettreAJourPersonnage(state);
@@ -141,6 +143,9 @@ void majRendu(Jeu *jeu) {
     if (zombieTexture) {
         afficher_zombies(jeu, zombieTexture, joueurCarteX, joueurCarteY, centreEcranX, centreEcranY);
     }
+
+    afficherMinimap(jeu);
+
 
     SDL_RenderPresent(jeu->renderer);
 }
