@@ -24,6 +24,8 @@ typedef struct {
     int totalFrames;           // Nombre total de frames
     int direction;             // Direction (0 = bas, 1 = gauche, 2 = droite, 3 = haut)
     int moving;                // En mouvement ou non
+    int frameCounter;          // Compteur pour l'animation
+    int frameDelay;            // Nombre de frames à attendre avant le changement
 } Zombie;
 
 extern Zombie* zombies[];

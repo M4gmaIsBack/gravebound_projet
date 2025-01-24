@@ -29,10 +29,12 @@ typedef struct {
     int vie_actuelle;
     int force_attaque;
     int invincibilite;         // Compteur pour l'invincibilité temporaire après avoir subi des dégâts
-    float vitesse;               // Vitesse de déplacement du personnage
+    float vitesse;             // Vitesse de déplacement du personnage
     float vitesse_max;
     float defense;
     Skill skills[10];
+    int frameCounter;          // Compteur pour l'animation
+    int frameDelay;            // Nombre de frames à attendre avant le changement
 } Personnage;
 
 void dessinerPersonnage(SDL_Renderer* renderer, int x, int y);
