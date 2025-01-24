@@ -6,6 +6,7 @@
 #include "../controller/controller.h"
 #include "../entities/character.h"
 #include "../map/procedural.h"
+#include "../entities/attack.h"
 #include "cache.h"
 #include "map.h"
 #include "../entities/zombies.h"
@@ -117,18 +118,12 @@ void majRendu(Jeu *jeu) {
             afficher_chunk(currentChunk, jeu, i, j, light);
 
             if (jeu->map.cases[i][j].structure.texture_path) {
-
                 afficher_structure(jeu, i, j, light);
             }
         }
     }
 
-    // Rendu du personnage
-    const Uint8* state = SDL_GetKeyboardState(NULL);
-    mettreAJourPersonnage(state);
-    dessinerPersonnage(jeu->renderer, jeu->largeurEcran / 2 - 16, jeu->hauteurEcran / 2 - 24);
-    dessinerBarreDeVie(jeu->renderer, jeu->largeurEcran / 2 - 16, jeu->hauteurEcran / 2 - 32, 32, 5, obtenirViePersonnage(), 100);
-
+    // Rendu des zombies
     int centreEcranX = jeu->largeurEcran / 2;
     int centreEcranY = jeu->hauteurEcran / 2;
     
@@ -142,5 +137,15 @@ void majRendu(Jeu *jeu) {
         afficher_zombies(jeu, zombieTexture, joueurCarteX, joueurCarteY, centreEcranX, centreEcranY);
     }
 
+    // Rendu du personnage
+    const Uint8* state = SDL_GetKeyboardState(NULL);
+    mettreAJourPersonnage(state);
+    dessinerPersonnage(jeu->renderer, jeu->largeurEcran / 2 - 16, jeu->hauteurEcran / 2 - 24);
+    dessinerBarreDeVie(jeu->renderer, jeu->largeurEcran / 2 - 16, jeu->hauteurEcran / 2 - 32, 32, 5, obtenirViePersonnage(), 100);
+
+    // Rendu des attaques en dernier pour qu'elles soient au premier plan
+    SDL_SetRenderDrawBlendMode(jeu->renderer, SDL_BLENDMODE_BLEND); // Activer le mode de fusion
+    render_attacks(jeu->renderer, jeu, joueurCarteX, joueurCarteY);
+    
     SDL_RenderPresent(jeu->renderer);
 }
