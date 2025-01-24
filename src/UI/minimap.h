@@ -1,9 +1,10 @@
 #ifndef MINIMAP_H
 #define MINIMAP_H
 
-#include "../ui/graphique.h"
+#include <SDL2/SDL.h>
+#include "../map/procedural.h"
+#include "../game/game.h"
 
-// Affiche la minimap avec zombies, objets, et joueur
 void afficherMinimap(Jeu *jeu);
 
-#endif // MINIMAP_H
+#endif
