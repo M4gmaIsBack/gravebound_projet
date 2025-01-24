@@ -4,6 +4,7 @@
 #include "../controller/controller.h"
 #include "../logs/logging.h"
 #include "../entities/character.h"
+#include "../entities/attack.h"  // Ajout de l'inclusion
 #include <SDL2/SDL.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -40,6 +41,9 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
 
     int skill_selected = 0;
 
+    // Initialisation des attaques
+    init_attacks(game->jeu.renderer);
+
     while (game->running) {
 
         while (SDL_PollEvent(&event)) {
@@ -62,6 +66,25 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
 
             if (event.type == SDL_CONTROLLERAXISMOTION) {
                 gererDeplacementCarte(&event, &game->jeu, personnage);
+            }
+
+            // Détection de la manette
+            if (event.type == SDL_CONTROLLERDEVICEADDED) {
+                game->using_controller = 1;
+            }
+            if (event.type == SDL_CONTROLLERDEVICEREMOVED) {
+                game->using_controller = 0;
+            }
+
+            // Gestion des attaques à la souris
+            if (!game->using_controller) {
+                int mouseX, mouseY;
+                SDL_GetMouseState(&mouseX, &mouseY);
+                
+                int playerScreenX = game->jeu.largeurEcran / 2;
+                int playerScreenY = game->jeu.hauteurEcran / 2;
+                
+                handle_mouse_attack(mouseX, mouseY, playerScreenX, playerScreenY);
             }
         }
 
@@ -90,12 +113,29 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
             personnage->vitesse += 0.005;
         }
 
+        // Mettre à jour les attaques
+        int joueurCarteX = game->jeu.largeurEcran / 2 - game->jeu.carteX;
+        int joueurCarteY = game->jeu.hauteurEcran / 2 - game->jeu.carteY;
+        
+        // Ajouter un message de debug pour les coordonnées du joueur
+        static Uint32 lastDebugTime = 0;
+        Uint32 currentTime = SDL_GetTicks();
+        if (currentTime - lastDebugTime > 1000) {
+            logMessage("Position joueur: x=%d, y=%d", joueurCarteX, joueurCarteY);
+            lastDebugTime = currentTime;
+        }
+        
+        update_attacks(&game->jeu, joueurCarteX, joueurCarteY, game->using_controller);
+
         majRendu(&game->jeu);
 
         enregistrer_coordonnees(&game->jeu, save);
 
         SDL_Delay(16);
     }
+
+    // Nettoyage des attaques à la fin
+    cleanup_attacks();
 
     enregistrer_progression(game, save, personnage);
     logMessage("Fin de la boucle principale");

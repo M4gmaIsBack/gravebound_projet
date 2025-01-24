@@ -151,7 +151,7 @@ void initialiser_zombies_autour_position(int nombre, int centreX, int centreY, i
 
         printf("Zombie %d: x=%d, y=%d\n", i, zombieX, zombieY);
 
-        zombies[nombre_zombies++] = creer_zombie(100, 10, 2, 2, zombieX, zombieY, "normal");
+        zombies[nombre_zombies++] = creer_zombie(100, 10, 4, 4, zombieX, zombieY, "normal");
     }
 }
 

@@ -6,6 +6,7 @@
 #include "../controller/controller.h"
 #include "../entities/character.h"
 #include "../map/procedural.h"
+#include "../entities/attack.h"
 #include "../UI/minimap.h"
 #include "cache.h"
 #include "map.h"
@@ -118,13 +119,11 @@ void majRendu(Jeu *jeu) {
             afficher_chunk(currentChunk, jeu, i, j, light);
 
             if (jeu->map.cases[i][j].structure.texture_path) {
-
                 afficher_structure(jeu, i, j, light);
             }
         }
     }
-
-
+  
     // Rendu du personnage
     const Uint8* state = SDL_GetKeyboardState(NULL);
     mettreAJourPersonnage(state);
@@ -136,6 +135,10 @@ void majRendu(Jeu *jeu) {
     
     int joueurCarteX = centreEcranX - jeu->carteX;
     int joueurCarteY = centreEcranY - jeu->carteY;
+  
+      // Rendu des attaques en dernier pour qu'elles soient au premier plan
+    SDL_SetRenderDrawBlendMode(jeu->renderer, SDL_BLENDMODE_BLEND); // Activer le mode de fusion
+    render_attacks(jeu->renderer, jeu, joueurCarteX, joueurCarteY);
     
     mettre_a_jour_zombies(joueurCarteX, joueurCarteY);
     
@@ -143,9 +146,8 @@ void majRendu(Jeu *jeu) {
     if (zombieTexture) {
         afficher_zombies(jeu, zombieTexture, joueurCarteX, joueurCarteY, centreEcranX, centreEcranY);
     }
-
+  
     afficherMinimap(jeu);
-
 
     SDL_RenderPresent(jeu->renderer);
 }
