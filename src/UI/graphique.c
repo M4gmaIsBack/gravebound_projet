@@ -7,6 +7,7 @@
 #include "../entities/character.h"
 #include "../map/procedural.h"
 #include "../entities/attack.h"
+#include "../UI/minimap.h"
 #include "cache.h"
 #include "map.h"
 #include "../entities/zombies.h"
@@ -122,13 +123,22 @@ void majRendu(Jeu *jeu) {
             }
         }
     }
+  
+    // Rendu du personnage
+    const Uint8* state = SDL_GetKeyboardState(NULL);
+    mettreAJourPersonnage(state);
+    dessinerPersonnage(jeu->renderer, jeu->largeurEcran / 2 - 16, jeu->hauteurEcran / 2 - 24);
+    dessinerBarreDeVie(jeu->renderer, jeu->largeurEcran / 2 - 16, jeu->hauteurEcran / 2 - 32, 32, 5, obtenirViePersonnage(), 100);
 
-    // Rendu des zombies
     int centreEcranX = jeu->largeurEcran / 2;
     int centreEcranY = jeu->hauteurEcran / 2;
     
     int joueurCarteX = centreEcranX - jeu->carteX;
     int joueurCarteY = centreEcranY - jeu->carteY;
+  
+      // Rendu des attaques en dernier pour qu'elles soient au premier plan
+    SDL_SetRenderDrawBlendMode(jeu->renderer, SDL_BLENDMODE_BLEND); // Activer le mode de fusion
+    render_attacks(jeu->renderer, jeu, joueurCarteX, joueurCarteY);
     
     mettre_a_jour_zombies(joueurCarteX, joueurCarteY);
     
@@ -136,16 +146,8 @@ void majRendu(Jeu *jeu) {
     if (zombieTexture) {
         afficher_zombies(jeu, zombieTexture, joueurCarteX, joueurCarteY, centreEcranX, centreEcranY);
     }
+  
+    afficherMinimap(jeu);
 
-    // Rendu du personnage
-    const Uint8* state = SDL_GetKeyboardState(NULL);
-    mettreAJourPersonnage(state);
-    dessinerPersonnage(jeu->renderer, jeu->largeurEcran / 2 - 16, jeu->hauteurEcran / 2 - 24);
-    dessinerBarreDeVie(jeu->renderer, jeu->largeurEcran / 2 - 16, jeu->hauteurEcran / 2 - 32, 32, 5, obtenirViePersonnage(), 100);
-
-    // Rendu des attaques en dernier pour qu'elles soient au premier plan
-    SDL_SetRenderDrawBlendMode(jeu->renderer, SDL_BLENDMODE_BLEND); // Activer le mode de fusion
-    render_attacks(jeu->renderer, jeu, joueurCarteX, joueurCarteY);
-    
     SDL_RenderPresent(jeu->renderer);
 }
