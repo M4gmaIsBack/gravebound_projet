@@ -1,13 +1,17 @@
+# Compilateur et options
 CC = gcc
-CFLAGS = -g -Wall -IC:/msys64/mingw64/include -IC:/msys64/mingw64/include/SDL2
-LDFLAGS = -LC:/msys64/mingw64/lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_mixer
+CFLAGS = -g -Wall -IC:/msys64/mingw64/include -IC:/msys64/mingw64/include/cjson -IC:/msys64/mingw64/include/SDL2 -I./cJSON
+LDFLAGS = -LC:/msys64/mingw64/lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_mixer -lcJSON
 
-# Repertoires du projet
+# Répertoires du projet
 SRC_DIR = src
 OBJ_DIR = obj
-GAME_LOG_DIR = src/logs/game.log
-SAVES_DIR = saves
 BIN_DIR = bin
+LOG_FILE = src/logs/game.log
+SAVES_DIR = saves
+
+# Nom de l'exécutable final
+EXEC = $(BIN_DIR)/gravebound.exe
 
 # Liste des fichiers sources
 SRC = $(SRC_DIR)/main.c \
@@ -27,35 +31,31 @@ SRC = $(SRC_DIR)/main.c \
       $(SRC_DIR)/entities/skills.c \
       $(SRC_DIR)/game/config.c
 
-
-
 # Conversion des fichiers sources en fichiers objets
 OBJ = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
-# Nom de l'executable final
-EXEC = $(BIN_DIR)/gravebound.exe
-
-# Regle principale de compilation
+# Règle principale de compilation
 all: $(EXEC)
 
-# Creation automatique des repertoires necessaires
-$(shell mkdir -p $(OBJ_DIR)/UI $(OBJ_DIR)/logs $(OBJ_DIR)/controller $(OBJ_DIR)/audio $(OBJ_DIR)/game $(OBJ_DIR)/map $(OBJ_DIR)/entities $(SAVES_DIR) $(BIN_DIR))
+# Création automatique des répertoires nécessaires
+$(shell mkdir -p $(OBJ_DIR)/UI $(OBJ_DIR)/logs $(OBJ_DIR)/controller $(OBJ_DIR)/audio $(OBJ_DIR)/game $(OBJ_DIR)/map $(OBJ_DIR)/entities $(BIN_DIR) $(SAVES_DIR))
 
-# Regle de generation de l'executable
+# Génération de l'exécutable final
 $(EXEC): $(OBJ)
-	$(CC) $(OBJ) -o $(EXEC) $(LDFLAGS)
+	$(CC) $(OBJ) -o $@ $(LDFLAGS)
 
-# Regle generique de compilation des fichiers objets
+# Règle générique pour compiler les fichiers objets
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(@D) # Crée les sous-dossiers pour les fichiers objets si nécessaire
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Nettoyage des fichiers generes
+# Nettoyage des fichiers générés
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR) $(SAVES_DIR) $(GAME_LOG_DIR)
+	rm -rf $(OBJ_DIR) $(BIN_DIR) $(SAVES_DIR) $(LOG_FILE)
 
-# Execution du programme
+# Exécution du programme
 run: $(EXEC)
 	./$(EXEC)
 
-# Declaration des cibles qui ne correspondent pas a des fichiers
+# Déclaration des cibles qui ne correspondent pas à des fichiers
 .PHONY: all clean run

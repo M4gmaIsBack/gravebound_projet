@@ -8,8 +8,9 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include "../entities/zombies.h"
+#include <cjson/cJSON.h>
 
-int vague = 1;
+int vague = 9;
 
 // Initialise le jeu
 // Retourne 1 si c'est good, 0 en cas d'echec
@@ -72,10 +73,8 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
             cooldown_skills(personnage);
             display_time(&game->jeu.countdown);
 
-            int temp = (20 - game->jeu.countdown.OFFSET) * 60; //temps avant la première nuit (20h)
-
-            if (game->jeu.countdown.elapsed_time > temp) {
-                vague = 1 + (game->jeu.countdown.elapsed_time - 20 * 60) / 24 * 60; //tout les jours à 20h +1 vague
+            if (game->jeu.countdown.elapsed_time + game->jeu.countdown.OFFSET * 60 > (vague * 24 + game->jeu.countdown.OFFSET) * 60) {
+                vague++;
             }
 
             lastUpdateTimeCD = currentTimeCD;
@@ -84,12 +83,13 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
 
         static Uint32 lastUpdateTimeZ = 0;
         Uint32 currentTimeZ = SDL_GetTicks();
-        if (currentTimeZ > lastUpdateTimeZ + config.zombies.spawn_delay[vague]) { //5000
+        if (currentTimeZ > lastUpdateTimeZ + config.zombies.spawn_delay[vague] * 1000) { //5000
             if (game->jeu.countdown.time > 20 || game->jeu.countdown.time < 8) {
                 spawn_zombies((game->jeu.largeurEcran / 2) - game->jeu.carteX, (game->jeu.hauteurEcran / 2) - game->jeu.carteY , config.zombies.spawn_radius[vague]); //1000
             }
             lastUpdateTimeZ = currentTimeZ;
         }
+
 
         if (personnage->vitesse > personnage->vitesse_max) {
             personnage->vitesse -= 0.005;
@@ -169,25 +169,55 @@ void lancerJeu(Game *game, char *save) {
 
 void charger_coordonnees(Jeu *jeu, char *save) {
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/source/coord.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/coord.json", save);
     FILE *fichier = fopen(filepath, "r");
-    if (fichier == NULL || (fscanf(fichier, "%d %d", &jeu->carteX, &jeu->carteY) != 2)) {
+    if (fichier == NULL) {
+        jeu->carteX = -(jeu->map.taille * LARGEUR_CASE / 2) + (jeu->largeurEcran / 2);
+        jeu->carteY = -(jeu->map.taille * HAUTEUR_CASE / 2) + (jeu->hauteurEcran / 2);
+        return;
+    }
+
+    char buffer[1024];
+    fread(buffer, sizeof(char), sizeof(buffer) - 1, fichier);
+    fclose(fichier);
+
+    cJSON *json = cJSON_Parse(buffer);
+    if (json == NULL) {
+        jeu->carteX = -(jeu->map.taille * LARGEUR_CASE / 2) + (jeu->largeurEcran / 2);
+        jeu->carteY = -(jeu->map.taille * HAUTEUR_CASE / 2) + (jeu->hauteurEcran / 2);
+        return;
+    }
+
+    cJSON *carteX = cJSON_GetObjectItem(json, "carteX");
+    cJSON *carteY = cJSON_GetObjectItem(json, "carteY");
+
+    if (carteX && carteY) {
+        jeu->carteX = carteX->valueint;
+        jeu->carteY = carteY->valueint;
+    } else {
         jeu->carteX = -(jeu->map.taille * LARGEUR_CASE / 2) + (jeu->largeurEcran / 2);
         jeu->carteY = -(jeu->map.taille * HAUTEUR_CASE / 2) + (jeu->hauteurEcran / 2);
     }
-    if (fichier != NULL) {
-        fclose(fichier);
-    }
+
+    cJSON_Delete(json);
 }
 
 void enregistrer_coordonnees(Jeu *jeu, char *save) {
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/source/coord.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/coord.json", save);
     FILE *fichier = fopen(filepath, "w");
     if (fichier) {
-        fprintf(fichier, "%d %d\n", jeu->carteX, jeu->carteY);
+        cJSON *json = cJSON_CreateObject();
+        cJSON_AddNumberToObject(json, "carteX", jeu->carteX);
+        cJSON_AddNumberToObject(json, "carteY", jeu->carteY);
+
+        char *json_string = cJSON_Print(json);
+        fprintf(fichier, "%s\n", json_string);
+
+        free(json_string);
+        cJSON_Delete(json);
         fclose(fichier);
     } else {
-        logMessage("Erreur ouverture fichier coord.txt");
+        logMessage("Erreur ouverture fichier coord.json");
     }
 }
