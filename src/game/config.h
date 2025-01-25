@@ -3,6 +3,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include "../logs/logging.h"
 
 typedef struct {
     int sante;
@@ -111,5 +112,6 @@ int charger_config_map(Config_values_map *map, char *save);
 int charger_config_personnage(Config_values_personnage *personnage, char *save);
 int charger_config_skills(Config_values_skills *skills, char *save);
 int charger_config(char *save);
+int enregistrer_config(char *save);
 
 #endif

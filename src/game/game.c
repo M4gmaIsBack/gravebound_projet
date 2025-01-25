@@ -106,8 +106,6 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
 
     enregistrer_progression(game, save, personnage);
     logMessage("Fin de la boucle principale");
-
-
 }
 
 // Nettoie les ressources du jeu
