@@ -15,8 +15,9 @@ int charger_config_zombies(Config_values_zombies *zombies, char *save) {
         }
     }
 
-    char buffer[1024];
-    fread(buffer, sizeof(char), sizeof(buffer) - 1, file);
+    char buffer[4096]; // Increase buffer size
+    size_t read_size = fread(buffer, sizeof(char), sizeof(buffer) - 1, file);
+    buffer[read_size] = '\0'; // Null-terminate the buffer
     fclose(file);
 
     cJSON *json = cJSON_Parse(buffer);
@@ -67,8 +68,9 @@ int charger_config_map(Config_values_map *map, char *save) {
         }
     }
 
-    char buffer[1024];
-    fread(buffer, sizeof(char), sizeof(buffer) - 1, file);
+    char buffer[4096]; // Increase buffer size
+    size_t read_size = fread(buffer, sizeof(char), sizeof(buffer) - 1, file);
+    buffer[read_size] = '\0'; // Null-terminate the buffer
     fclose(file);
 
     cJSON *json = cJSON_Parse(buffer);
@@ -117,8 +119,9 @@ int charger_config_personnage(Config_values_personnage *personnage, char *save) 
         }
     }
 
-    char buffer[1024];
-    fread(buffer, sizeof(char), sizeof(buffer) - 1, file);
+    char buffer[4096]; // Increase buffer size
+    size_t read_size = fread(buffer, sizeof(char), sizeof(buffer) - 1, file);
+    buffer[read_size] = '\0'; // Null-terminate the buffer
     fclose(file);
 
     cJSON *json = cJSON_Parse(buffer);
@@ -164,8 +167,9 @@ int charger_config_skills(Config_values_skills *skill, char *save) {
         }
     }
 
-    char buffer[1024];
-    fread(buffer, sizeof(char), sizeof(buffer) - 1, file);
+    char buffer[4096]; // Increase buffer size
+    size_t read_size = fread(buffer, sizeof(char), sizeof(buffer) - 1, file);
+    buffer[read_size] = '\0'; // Null-terminate the buffer
     fclose(file);
 
     cJSON *json = cJSON_Parse(buffer);
@@ -331,12 +335,6 @@ int enregistrer_config(char *save) {
     fprintf(file_map, "%s", json_map_string);
     fprintf(file_personnage, "%s", json_personnage_string);
     fprintf(file_skills, "%s", json_skills_string);
-
-    // Free the JSON strings
-    free(json_zombie_string);
-    free(json_map_string);
-    free(json_personnage_string);
-    free(json_skills_string);
 
     fclose(file_zombie);
     fclose(file_map);

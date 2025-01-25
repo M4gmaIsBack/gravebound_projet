@@ -24,14 +24,12 @@ typedef struct {
 typedef struct {
     int running;
     Jeu jeu;
-    int using_controller;  // Ajout de la variable
 } Game;
 
 extern Config config;
 
 int initJeu(Game *game);
 void bouclePrincipale(Game *game, char *save, Personnage *personnage);
-
 void nettoyerRessources(Game *game);
 void toggleFullscreen(Jeu *jeu);
 void lancerJeu(Game *game, char *save);

@@ -29,9 +29,7 @@ SRC = $(SRC_DIR)/main.c \
       $(SRC_DIR)/UI/menu_personnage.c \
       $(SRC_DIR)/UI/map.c \
       $(SRC_DIR)/entities/skills.c \
-      $(SRC_DIR)/game/config.c \
-      $(SRC_DIR)/entities/attack.c \
-      $(SRC_DIR)/UI/minimap.c
+      $(SRC_DIR)/game/config.c
 
 # Conversion des fichiers sources en fichiers objets
 OBJ = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
@@ -59,4 +57,5 @@ clean:
 run: $(EXEC)
 	./$(EXEC)
 
+# Déclaration des cibles qui ne correspondent pas à des fichiers
 .PHONY: all clean run

@@ -37,8 +37,6 @@ Personnage charger_personnage(SDL_Renderer* renderer, char *save) {
     personnage.frameHeight = 32;
     personnage.currentFrame = 0;
     personnage.totalFrames = 3;
-    personnage.frameCounter = 0;  // Nouveau compteur
-    personnage.frameDelay = 8;    // Délai entre les changements de frame
 
     char filepath[100];
     snprintf(filepath, sizeof(filepath), "./saves/%s/source/personnages.json", save);
@@ -119,14 +117,9 @@ void mettreAJourPersonnage(const Uint8* state) {
 
     // Met à jour la frame uniquement si le personnage bouge
     if (personnage.moving) {
-        personnage.frameCounter++;
-        if (personnage.frameCounter >= personnage.frameDelay) {
-            personnage.currentFrame = (personnage.currentFrame + 1) % personnage.totalFrames;
-            personnage.frameCounter = 0;
-        }
+        personnage.currentFrame = (personnage.currentFrame + 1) % personnage.totalFrames;
     } else {
         personnage.currentFrame = 1;
-        personnage.frameCounter = 0;
     }
     
     // Mise à jour du compteur d'invincibilité
