@@ -7,6 +7,7 @@
 #include "../game/game.h"
 #include "../logs/logging.h"
 #include "../entities/character.h"
+#include <cjson/cJSON.h>
 
 Zombie* zombies[MAX_ZOMBIES];
 int nombre_zombies = 0;
@@ -28,8 +29,6 @@ Zombie* creer_zombie(int sante, int puissance_attaque, float vitesse, float vite
     nouveau_zombie->frameHeight = 32;
     nouveau_zombie->currentFrame = 0;
     nouveau_zombie->totalFrames = 3;
-    nouveau_zombie->frameCounter = 0;  // Initialisation du compteur
-    nouveau_zombie->frameDelay = 8;    // Augmenter cette valeur pour ralentir l'animation
     nouveau_zombie->direction = 0;
     nouveau_zombie->moving = 0;
     return nouveau_zombie;
@@ -83,6 +82,9 @@ void deplacer_vers_joueur(Zombie* zombie, int joueur_x, int joueur_y) {
             zombie->x = nouveau_x;
             zombie->y = nouveau_y;
             zombie->moving = 1;
+            
+            // Animation
+            zombie->currentFrame = (zombie->currentFrame + 1) % zombie->totalFrames;
         } else {
             // En cas de collision, essayer de se déplacer latéralement
             float angle = atan2(dy, dx);
@@ -97,20 +99,11 @@ void deplacer_vers_joueur(Zombie* zombie, int joueur_x, int joueur_y) {
             }
             
             zombie->moving = 1;
-        }
-
-        // Gestion de l'animation avec le frameDelay
-        if (zombie->moving) {
-            zombie->frameCounter++;
-            if (zombie->frameCounter >= zombie->frameDelay) {
-                zombie->currentFrame = (zombie->currentFrame + 1) % zombie->totalFrames;
-                zombie->frameCounter = 0;
-            }
+            zombie->currentFrame = (zombie->currentFrame + 1) % zombie->totalFrames;
         }
     } else {
         zombie->moving = 0;
         zombie->currentFrame = 1;
-        zombie->frameCounter = 0;
     }
     // printf("Zombie de type %s se déplace vers la position (%d, %d)\n", zombie->type, zombie->x, zombie->y);
 }
@@ -132,7 +125,8 @@ void nettoyer_zombies() {
 }
 
 void spawn_zombies(int centreX, int centreY, int rayon) {
-    int nouveaux_zombies = rand() % 5 + 1; // Entre 1 et 5 nouveaux zombies
+    int nouveaux_zombies = rand() % config.zombies.spawn_rate[vague] + 1; // Entre 1 et 5 nouveaux zombies
+    printf("Spawning %d zombies around (%d, %d) with radius %d\n", nouveaux_zombies, centreX, centreY, rayon);
     initialiser_zombies_autour_position(nouveaux_zombies, centreX, centreY, rayon);
 }
 
@@ -157,45 +151,87 @@ void initialiser_zombies_autour_position(int nombre, int centreX, int centreY, i
         int zombieX = centreX + (int)(cos(angleRad) * distanceAleatoire);
         int zombieY = centreY + (int)(sin(angleRad) * distanceAleatoire);
 
-        printf("Zombie %d: x=%d, y=%d\n", i, zombieX, zombieY);
+        logMessage("Zombie %d apparaît en (%d, %d)", nombre_zombies, zombieX, zombieY);
 
-        zombies[nombre_zombies++] = creer_zombie(100, 10, 4, 4, zombieX, zombieY, "normal");
+        zombies[nombre_zombies++] = creer_zombie(config.zombies.max_health[vague], config.zombies.max_damage[vague], config.zombies.max_speed[vague], config.zombies.max_speed[vague], zombieX, zombieY, "normal");
     }
 }
 
 void enregistrer_zombies(char *save) {
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/zombies.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/zombies.json", save);
     FILE *fichier = fopen(filepath, "w");
     if (fichier == NULL) {
-        logMessage("Erreur ouverture fichier zombies.txt");
+        logMessage("Erreur ouverture fichier zombies.json");
         return;
     }
-    fprintf(fichier, "%d\n", nombre_zombies);
+
+    cJSON *json = cJSON_CreateObject();
+    cJSON_AddNumberToObject(json, "nombre_zombies", nombre_zombies);
+
+    cJSON *zombies_array = cJSON_CreateArray();
     for (int i = 0; i < nombre_zombies; i++) {
-        fprintf(fichier, "%d %d %f %f %d %d %s\n", zombies[i]->sante, zombies[i]->puissance_attaque, zombies[i]->vitesse, zombies[i]->vitesse_max, zombies[i]->x, zombies[i]->y, zombies[i]->type);
+        cJSON *zombie = cJSON_CreateObject();
+        cJSON_AddNumberToObject(zombie, "sante", zombies[i]->sante);
+        cJSON_AddNumberToObject(zombie, "puissance_attaque", zombies[i]->puissance_attaque);
+        cJSON_AddNumberToObject(zombie, "vitesse", zombies[i]->vitesse);
+        cJSON_AddNumberToObject(zombie, "vitesse_max", zombies[i]->vitesse_max);
+        cJSON_AddNumberToObject(zombie, "x", zombies[i]->x);
+        cJSON_AddNumberToObject(zombie, "y", zombies[i]->y);
+        cJSON_AddStringToObject(zombie, "type", zombies[i]->type);
+        cJSON_AddItemToArray(zombies_array, zombie);
     }
+    cJSON_AddItemToObject(json, "zombies", zombies_array);
+
+    char *json_string = cJSON_Print(json);
+    fprintf(fichier, "%s\n", json_string);
+
+    free(json_string);
+    cJSON_Delete(json);
     fclose(fichier);
 }
 
 void charger_zombies(char *save) {
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/zombies.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/zombies.json", save);
     FILE *fichier = fopen(filepath, "r");
     if (fichier == NULL) {
-        logMessage("Erreur ouverture fichier zombies.txt");
+        logMessage("Erreur ouverture fichier zombies.json");
         return;
     }
-    fscanf(fichier, "%d\n", &nombre_zombies);
-    for (int i = 0; i < nombre_zombies; i++) {
-        int sante, puissance_attaque,x, y;
-        float vitesse, vitesse_max;
-        char type[20];
-        fscanf(fichier, "%d %d %f %f %d %d %s\n", &sante, &puissance_attaque, &vitesse, &vitesse_max, &x, &y, type);
-        zombies[i] = creer_zombie(sante, puissance_attaque, vitesse, vitesse_max, x, y, type);
-    }
+
+    char buffer[4096];
+    fread(buffer, sizeof(char), sizeof(buffer) - 1, fichier);
     fclose(fichier);
-    return;
+
+    cJSON *json = cJSON_Parse(buffer);
+    if (json == NULL) {
+        logMessage("Erreur parsing fichier zombies.json");
+        return;
+    }
+
+    cJSON *nombre_zombies_json = cJSON_GetObjectItem(json, "nombre_zombies");
+    if (nombre_zombies_json) {
+        nombre_zombies = nombre_zombies_json->valueint;
+    }
+
+    cJSON *zombies_array = cJSON_GetObjectItem(json, "zombies");
+    if (zombies_array) {
+        for (int i = 0; i < cJSON_GetArraySize(zombies_array); i++) {
+            cJSON *zombie_json = cJSON_GetArrayItem(zombies_array, i);
+            int sante = cJSON_GetObjectItem(zombie_json, "sante")->valueint;
+            int puissance_attaque = cJSON_GetObjectItem(zombie_json, "puissance_attaque")->valueint;
+            float vitesse = cJSON_GetObjectItem(zombie_json, "vitesse")->valuedouble;
+            float vitesse_max = cJSON_GetObjectItem(zombie_json, "vitesse_max")->valuedouble;
+            int x = cJSON_GetObjectItem(zombie_json, "x")->valueint;
+            int y = cJSON_GetObjectItem(zombie_json, "y")->valueint;
+            const char *type = cJSON_GetObjectItem(zombie_json, "type")->valuestring;
+
+            zombies[i] = creer_zombie(sante, puissance_attaque, vitesse, vitesse_max, x, y, type);
+        }
+    }
+
+    cJSON_Delete(json);
 }
 
 void afficher_zombies(Jeu *jeu, SDL_Texture *zombieTexture, int joueurCarteX, int joueurCarteY, int centreEcranX, int centreEcranY) {

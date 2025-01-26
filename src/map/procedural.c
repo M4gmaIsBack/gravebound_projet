@@ -3,6 +3,7 @@
 #include <math.h>
 #include <time.h>
 #include "../map/procedural.h"
+#include <cjson/cJSON.h>
 
 #define SCALE 0.004f
 #define GRID_SIZE 32
@@ -174,32 +175,41 @@ carte genererCarte(carte map, GenerationParams params) {
 GenerationParams initGenerationParams() {
     GenerationParams params;
     params.seed = time(NULL);
-    params.scale = 0.004f;
-    params.amplitude = 1.75;
-    params.taille = 1000;
+    params.scale = config.map.scale;//0.004f;
+    params.amplitude = config.map.amplitude;//1.75;
+    params.taille = config.map.map_size;//1000;
     return params;
 }
 
 int sauvegarderParams(GenerationParams params, char *save) {
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/seed.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/seed.json", save);
     FILE *file = fopen(filepath, "w");
     if (!file) {
         printf("Erreur lors de l'ouverture du fichier");
         return 0;
     }
 
-    fprintf(file, "%u\n%f\n%f\n%d", params.seed, params.scale, params.amplitude, params.taille);
+    cJSON *json = cJSON_CreateObject();
+    cJSON_AddNumberToObject(json, "seed", params.seed);
+    cJSON_AddNumberToObject(json, "scale", params.scale);
+    cJSON_AddNumberToObject(json, "amplitude", params.amplitude);
+    cJSON_AddNumberToObject(json, "taille", params.taille);
+
+    char *json_string = cJSON_Print(json);
+    fprintf(file, "%s\n", json_string);
+
+    free(json_string);
+    cJSON_Delete(json);
     fclose(file);
     return 1;
 }
 
 GenerationParams chargerParams(char *save) {
-
     GenerationParams params;
 
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/seed.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/seed.json", save);
     FILE *file = fopen(filepath, "r");
     if (!file) {
         printf("Pas de seed trouvé, nouvelle génération");
@@ -213,14 +223,31 @@ GenerationParams chargerParams(char *save) {
         return params;
     }
 
-    if (fscanf(file, "%u\n%f\n%f\n%d", &params.seed, &params.scale, &params.amplitude, &params.taille) != 4) {
+    char buffer[1024];
+    fread(buffer, sizeof(char), sizeof(buffer) - 1, file);
+    fclose(file);
+
+    cJSON *json = cJSON_Parse(buffer);
+    if (json == NULL) {
         printf("Erreur lors de la lecture des paramètres");
-        fclose(file);
         return params;
     }
 
-    fclose(file);
+    cJSON *seed = cJSON_GetObjectItem(json, "seed");
+    cJSON *scale = cJSON_GetObjectItem(json, "scale");
+    cJSON *amplitude = cJSON_GetObjectItem(json, "amplitude");
+    cJSON *taille = cJSON_GetObjectItem(json, "taille");
 
+    if (seed && scale && amplitude && taille) {
+        params.seed = seed->valueint;
+        params.scale = scale->valuedouble;
+        params.amplitude = amplitude->valuedouble;
+        params.taille = taille->valueint;
+    } else {
+        printf("Erreur lors de la lecture des paramètres");
+    }
+
+    cJSON_Delete(json);
     printf("seed: %u, scale: %f, amplitude: %f, taille: %d\n", params.seed, params.scale, params.amplitude, params.taille);
     return params;
 }

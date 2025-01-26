@@ -88,16 +88,9 @@ void skill_activation(SDL_Event *event, Game *game, Personnage *personnage, int 
             break;
 
         case SDLK_o:
-            skill_add(personnage, "Escape", 1, 0, 0, 0, 0, 0);
-            skill_add(personnage, "Teleport", 1, 0, 0, 0, 0, 0);
-            skill_add(personnage, "Knockback", 1, 300, 0, 0, 0, 0);
-            skill_add(personnage, "Fire_Ball", 1, 300, 0, 0, 0, 75);
-            skill_add(personnage, "Cage", 5, 300, 0, 0, 0, 20);
-            skill_add(personnage, "Speed", 5, 0, 0, 0, 0, 0);
-            skill_add(personnage, "Berzerk", 5, 0, 0, 0, 0, 0);
-            skill_add(personnage, "Kamikaze", 5, 300, 0, 0, 0, 100);
-            skill_add(personnage, "Heal", 5, 0, 0, 0, 0, 0);
-            skill_add(personnage, "Turtle", 5, 0, 0, 0, 0, 0);
+            for (int i = 0; i < 10; i++) {
+                skill_add(personnage, 1, i);
+            }
             break;  
     }
 }

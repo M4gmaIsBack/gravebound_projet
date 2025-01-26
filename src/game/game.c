@@ -4,13 +4,14 @@
 #include "../controller/controller.h"
 #include "../logs/logging.h"
 #include "../entities/character.h"
-#include "../entities/attack.h"  // Ajout de l'inclusion
+#include "../entities/attack.h"
 #include <SDL2/SDL.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include "../entities/zombies.h"
+#include <cjson/cJSON.h>
 
-
+int vague = 0;
 
 // Initialise le jeu
 // Retourne 1 si c'est good, 0 en cas d'echec
@@ -29,6 +30,9 @@ int initJeu(Game *game) {
         return 0;
     }
 
+    init_attacks(game->jeu.renderer);
+
+
     logMessage("Jeu initialisé avec succès");
     return 1;
 }
@@ -40,9 +44,6 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
     logMessage("Début de la boucle principale");
 
     int skill_selected = 0;
-
-    // Initialisation des attaques
-    init_attacks(game->jeu.renderer);
 
     while (game->running) {
 
@@ -68,8 +69,7 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
                 gererDeplacementCarte(&event, &game->jeu, personnage);
             }
 
-            // Détection de la manette
-            if (event.type == SDL_CONTROLLERDEVICEADDED) {
+             if (event.type == SDL_CONTROLLERDEVICEADDED) {
                 game->using_controller = 1;
             }
             if (event.type == SDL_CONTROLLERDEVICEREMOVED) {
@@ -94,18 +94,24 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
             update_time(&game->jeu.countdown);
             cooldown_skills(personnage);
             display_time(&game->jeu.countdown);
+
+            if (game->jeu.countdown.elapsed_time + game->jeu.countdown.OFFSET * 60 > (vague * 24 + game->jeu.countdown.OFFSET) * 60) {
+                vague++;
+            }
+
             lastUpdateTimeCD = currentTimeCD;
         }
 
 
         static Uint32 lastUpdateTimeZ = 0;
         Uint32 currentTimeZ = SDL_GetTicks();
-        if (currentTimeZ > lastUpdateTimeZ + 5000) {
+        if (currentTimeZ > lastUpdateTimeZ + config.zombies.spawn_delay[vague] * 1000) { //5000
             if (game->jeu.countdown.time > 20 || game->jeu.countdown.time < 8) {
-                spawn_zombies((game->jeu.largeurEcran / 2) - game->jeu.carteX, (game->jeu.hauteurEcran / 2) - game->jeu.carteY , 1000);
+                spawn_zombies((game->jeu.largeurEcran / 2) - game->jeu.carteX, (game->jeu.hauteurEcran / 2) - game->jeu.carteY , config.zombies.spawn_radius[vague]); //1000
             }
             lastUpdateTimeZ = currentTimeZ;
         }
+
 
         if (personnage->vitesse > personnage->vitesse_max) {
             personnage->vitesse -= 0.005;
@@ -113,18 +119,9 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
             personnage->vitesse += 0.005;
         }
 
-        // Mettre à jour les attaques
         int joueurCarteX = game->jeu.largeurEcran / 2 - game->jeu.carteX;
         int joueurCarteY = game->jeu.hauteurEcran / 2 - game->jeu.carteY;
-        
-        // Ajouter un message de debug pour les coordonnées du joueur
-        static Uint32 lastDebugTime = 0;
-        Uint32 currentTime = SDL_GetTicks();
-        if (currentTime - lastDebugTime > 1000) {
-            logMessage("Position joueur: x=%d, y=%d", joueurCarteX, joueurCarteY);
-            lastDebugTime = currentTime;
-        }
-        
+
         update_attacks(&game->jeu, joueurCarteX, joueurCarteY, game->using_controller);
 
         majRendu(&game->jeu);
@@ -134,18 +131,15 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
         SDL_Delay(16);
     }
 
-    // Nettoyage des attaques à la fin
-    cleanup_attacks();
-
     enregistrer_progression(game, save, personnage);
     logMessage("Fin de la boucle principale");
-
-
 }
 
 // Nettoie les ressources du jeu
 void nettoyerRessources(Game *game) {
     logMessage("Nettoyage des ressources du jeu");
+
+    cleanup_attacks();
 
     fermerGraphique(&game->jeu);
 
@@ -161,7 +155,7 @@ void enregistrer_progression(Game *game, char *save, Personnage *personnage) {
 
 Personnage charger_progression(Game *game, char *save) {
     init_carte(&game->jeu, save);
-    init_time(&game->jeu.countdown, (time){12, 0, 0, 0, 0, 20}, save);
+    init_time(&game->jeu.countdown, save);
     charger_zombies(save);
     charger_coordonnees(&game->jeu, save);
     Personnage personnage = charger_personnage(game->jeu.renderer, save);
@@ -177,12 +171,13 @@ void lancerJeu(Game *game, char *save) {
     sprintf(filepath, "saves/%s", save);
 
     mkdir(filepath);
-    mkdir(strcat(filepath, "/config"));
+    sprintf(filepath, "saves/%s/config", save);
+    mkdir(filepath);
+    sprintf(filepath, "saves/%s/source", save);
+    mkdir(filepath);
 
-    // Vérification que le chemin est un répertoire
-    struct stat st;
-    if (stat(filepath, &st) == -1 || !S_ISDIR(st.st_mode)) {
-        logMessage("Erreur lors de la vérification du répertoire de sauvegarde");
+    if (!charger_config(save)) {
+        logMessage("Erreur chargement config");
         return;
     }
 
@@ -201,25 +196,55 @@ void lancerJeu(Game *game, char *save) {
 
 void charger_coordonnees(Jeu *jeu, char *save) {
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/coord.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/coord.json", save);
     FILE *fichier = fopen(filepath, "r");
-    if (fichier == NULL || (fscanf(fichier, "%d %d", &jeu->carteX, &jeu->carteY) != 2)) {
+    if (fichier == NULL) {
+        jeu->carteX = -(jeu->map.taille * LARGEUR_CASE / 2) + (jeu->largeurEcran / 2);
+        jeu->carteY = -(jeu->map.taille * HAUTEUR_CASE / 2) + (jeu->hauteurEcran / 2);
+        return;
+    }
+
+    char buffer[1024];
+    fread(buffer, sizeof(char), sizeof(buffer) - 1, fichier);
+    fclose(fichier);
+
+    cJSON *json = cJSON_Parse(buffer);
+    if (json == NULL) {
+        jeu->carteX = -(jeu->map.taille * LARGEUR_CASE / 2) + (jeu->largeurEcran / 2);
+        jeu->carteY = -(jeu->map.taille * HAUTEUR_CASE / 2) + (jeu->hauteurEcran / 2);
+        return;
+    }
+
+    cJSON *carteX = cJSON_GetObjectItem(json, "carteX");
+    cJSON *carteY = cJSON_GetObjectItem(json, "carteY");
+
+    if (carteX && carteY) {
+        jeu->carteX = carteX->valueint;
+        jeu->carteY = carteY->valueint;
+    } else {
         jeu->carteX = -(jeu->map.taille * LARGEUR_CASE / 2) + (jeu->largeurEcran / 2);
         jeu->carteY = -(jeu->map.taille * HAUTEUR_CASE / 2) + (jeu->hauteurEcran / 2);
     }
-    if (fichier != NULL) {
-        fclose(fichier);
-    }
+
+    cJSON_Delete(json);
 }
 
 void enregistrer_coordonnees(Jeu *jeu, char *save) {
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/coord.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/coord.json", save);
     FILE *fichier = fopen(filepath, "w");
     if (fichier) {
-        fprintf(fichier, "%d %d\n", jeu->carteX, jeu->carteY);
+        cJSON *json = cJSON_CreateObject();
+        cJSON_AddNumberToObject(json, "carteX", jeu->carteX);
+        cJSON_AddNumberToObject(json, "carteY", jeu->carteY);
+
+        char *json_string = cJSON_Print(json);
+        fprintf(fichier, "%s\n", json_string);
+
+        free(json_string);
+        cJSON_Delete(json);
         fclose(fichier);
     } else {
-        logMessage("Erreur ouverture fichier coord.txt");
+        logMessage("Erreur ouverture fichier coord.json");
     }
 }

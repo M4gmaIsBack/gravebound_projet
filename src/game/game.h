@@ -4,16 +4,10 @@
 #include "../map/procedural.h"
 #include "../entities/character.h"
 #include "../entities/skills.h"
-#include <SDL2/SDL.h>
+#include "../game/config.h"
+#include "time.h"
 
-typedef struct {
-    int hour;
-    int minute;
-    int second;
-    int elapsed_time;
-    float time;
-    float OFFSET;
-} time;
+
 
 typedef struct {
     SDL_Window *window; 
@@ -30,12 +24,13 @@ typedef struct {
 typedef struct {
     int running;
     Jeu jeu;
-    int using_controller;  // Ajout de la variable
+    int using_controller;
 } Game;
+
+extern Config config;
 
 int initJeu(Game *game);
 void bouclePrincipale(Game *game, char *save, Personnage *personnage);
-
 void nettoyerRessources(Game *game);
 void toggleFullscreen(Jeu *jeu);
 void lancerJeu(Game *game, char *save);

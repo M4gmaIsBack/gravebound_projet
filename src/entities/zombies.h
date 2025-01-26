@@ -5,31 +5,16 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
+#include "../game/config.h"
 #include "../game/game.h"
 
 #define MAX_ZOMBIES 100
 #define ZOMBIE_DISTANCE_MIN 10
 
-typedef struct {
-    int sante;
-    int puissance_attaque;
-    float vitesse;
-    float vitesse_max;
-    int x;
-    int y;
-    char* type;
-    int frameWidth;            // Largeur d'une frame
-    int frameHeight;           // Hauteur d'une frame
-    int currentFrame;          // Frame actuelle
-    int totalFrames;           // Nombre total de frames
-    int direction;             // Direction (0 = bas, 1 = gauche, 2 = droite, 3 = haut)
-    int moving;                // En mouvement ou non
-    int frameCounter;          // Compteur pour l'animation
-    int frameDelay;            // Nombre de frames à attendre avant le changement
-} Zombie;
-
 extern Zombie* zombies[];
 extern int nombre_zombies;
+extern Config config;
+extern int vague;
 
 void deplacer_vers_joueur(Zombie* zombie, int joueur_x, int joueur_y);
 void mettre_a_jour_zombies(int joueur_x, int joueur_y);

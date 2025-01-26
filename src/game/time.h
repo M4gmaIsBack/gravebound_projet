@@ -4,11 +4,20 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
-#include "../game/game.h"
+#include "config.h"
 
-extern char* SAVE_FILE;
+extern Config config;
 
-int init_time(time *countdown, time set_time, char *save);
+typedef struct {
+    int hour;
+    int minute;
+    int second;
+    int elapsed_time;
+    float time;
+    float OFFSET;
+} time;
+
+int init_time(time *countdown, char *save);
 void update_time(time *countdown);
 void display_time(time *countdown);
 void enregistrer_time(time *countdown, char *save);

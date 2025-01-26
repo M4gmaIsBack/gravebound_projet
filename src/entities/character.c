@@ -4,6 +4,8 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include "zombies.h"
+#include "../game/config.h"
+#include <cjson/cJSON.h>
 
 Personnage personnage;
 
@@ -35,25 +37,58 @@ Personnage charger_personnage(SDL_Renderer* renderer, char *save) {
     personnage.frameHeight = 32;
     personnage.currentFrame = 0;
     personnage.totalFrames = 3;
-    personnage.frameCounter = 0;  // Nouveau compteur
-    personnage.frameDelay = 8;    // Délai entre les changements de frame
 
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/personnages.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/personnages.json", save);
     FILE *fichier = fopen(filepath, "r");
-    if (fichier == NULL || (fscanf(fichier, "%d %d %d %d %d %d %f %f %d %d %f\n", &personnage.x, &personnage.y, &personnage.vie_max, &personnage.vie_actuelle, &personnage.force_attaque, &personnage.invincibilite, &personnage.vitesse, &personnage.vitesse_max, &personnage.direction, &personnage.moving, &personnage.defense) != 11)) {
+    if (fichier == NULL) {
         personnage.direction = 0;
         personnage.moving = 0;
         personnage.x = 0; 
         personnage.y = 0; 
-        personnage.vie_max = 100;
-        personnage.vie_actuelle = 100;
-        personnage.force_attaque = 25;
+        personnage.vie_max = config.personnage.vie_max[0];
+        personnage.vie_actuelle = config.personnage.vie_max[0];
+        personnage.force_attaque = config.personnage.force_attaque_max[0];
         personnage.invincibilite = 0;
-        personnage.vitesse = 5;
-        personnage.vitesse_max = 5;
-        personnage.defense = 0;
+        personnage.vitesse = config.personnage.vitesse_max[0];
+        personnage.vitesse_max = config.personnage.vitesse_max[0];
+        personnage.defense = config.personnage.defense_max[0];
+        return personnage;
     }
+
+    char buffer[1024];
+    fread(buffer, sizeof(char), sizeof(buffer) - 1, fichier);
+    fclose(fichier);
+
+    cJSON *json = cJSON_Parse(buffer);
+    if (json == NULL) {
+        personnage.direction = 0;
+        personnage.moving = 0;
+        personnage.x = 0; 
+        personnage.y = 0; 
+        personnage.vie_max = config.personnage.vie_max[0];
+        personnage.vie_actuelle = config.personnage.vie_max[0];
+        personnage.force_attaque = config.personnage.force_attaque_max[0];
+        personnage.invincibilite = 0;
+        personnage.vitesse = config.personnage.vitesse_max[0];
+        personnage.vitesse_max = config.personnage.vitesse_max[0];
+        personnage.defense = config.personnage.defense_max[0];
+        return personnage;
+    }
+
+    personnage.x = cJSON_GetObjectItem(json, "x")->valueint;
+    personnage.y = cJSON_GetObjectItem(json, "y")->valueint;
+    personnage.vie_max = cJSON_GetObjectItem(json, "vie_max")->valueint;
+    personnage.vie_actuelle = cJSON_GetObjectItem(json, "vie_actuelle")->valueint;
+    personnage.force_attaque = cJSON_GetObjectItem(json, "force_attaque")->valueint;
+    personnage.invincibilite = cJSON_GetObjectItem(json, "invincibilite")->valueint;
+    personnage.vitesse = cJSON_GetObjectItem(json, "vitesse")->valuedouble;
+    personnage.vitesse_max = cJSON_GetObjectItem(json, "vitesse_max")->valuedouble;
+    personnage.direction = cJSON_GetObjectItem(json, "direction")->valueint;
+    personnage.moving = cJSON_GetObjectItem(json, "moving")->valueint;
+    personnage.defense = cJSON_GetObjectItem(json, "defense")->valuedouble;
+
+    cJSON_Delete(json);
 
     return personnage;
 }
@@ -82,14 +117,9 @@ void mettreAJourPersonnage(const Uint8* state) {
 
     // Met à jour la frame uniquement si le personnage bouge
     if (personnage.moving) {
-        personnage.frameCounter++;
-        if (personnage.frameCounter >= personnage.frameDelay) {
-            personnage.currentFrame = (personnage.currentFrame + 1) % personnage.totalFrames;
-            personnage.frameCounter = 0;
-        }
+        personnage.currentFrame = (personnage.currentFrame + 1) % personnage.totalFrames;
     } else {
         personnage.currentFrame = 1;
-        personnage.frameCounter = 0;
     }
     
     // Mise à jour du compteur d'invincibilité
@@ -172,12 +202,30 @@ void dessinerBarreDeVie(SDL_Renderer* renderer, int x, int y, int largeur, int h
 
 void enregistrer_personnage(char *save) {
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/personnages.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/personnages.json", save);
     FILE *fichier = fopen(filepath, "w");
     if (fichier == NULL) {
-        logMessage("Erreur ouverture fichier personnage.txt");
+        logMessage("Erreur ouverture fichier personnages.json");
         return;
     }
-    fprintf(fichier, "%d %d %d %d %d %d %f %f %d %d %f\n", personnage.x, personnage.y, personnage.vie_max, personnage.vie_actuelle, personnage.force_attaque, personnage.invincibilite, personnage.vitesse, personnage.vitesse_max, personnage.direction, personnage.moving, personnage.defense);
+
+    cJSON *json = cJSON_CreateObject();
+    cJSON_AddNumberToObject(json, "x", personnage.x);
+    cJSON_AddNumberToObject(json, "y", personnage.y);
+    cJSON_AddNumberToObject(json, "vie_max", personnage.vie_max);
+    cJSON_AddNumberToObject(json, "vie_actuelle", personnage.vie_actuelle);
+    cJSON_AddNumberToObject(json, "force_attaque", personnage.force_attaque);
+    cJSON_AddNumberToObject(json, "invincibilite", personnage.invincibilite);
+    cJSON_AddNumberToObject(json, "vitesse", personnage.vitesse);
+    cJSON_AddNumberToObject(json, "vitesse_max", personnage.vitesse_max);
+    cJSON_AddNumberToObject(json, "direction", personnage.direction);
+    cJSON_AddNumberToObject(json, "moving", personnage.moving);
+    cJSON_AddNumberToObject(json, "defense", personnage.defense);
+
+    char *json_string = cJSON_Print(json);
+    fprintf(fichier, "%s\n", json_string);
+
+    free(json_string);
+    cJSON_Delete(json);
     fclose(fichier);
 }

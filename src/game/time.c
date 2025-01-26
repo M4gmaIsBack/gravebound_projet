@@ -3,32 +3,67 @@
 #include "../logs/logging.h"
 #include "../game/time.h"
 #include "../UI/graphique.h"
-#include "game.h"
-
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <cjson/cJSON.h>
 
-int init_time(time *countdown, time temps, char *save) {
+int init_time(time *countdown, char *save) {
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/state.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/state.json", save);
     FILE *file = fopen(filepath, "r");
-    if (file == NULL || fscanf(file, "%d\n%d\n%d\n%d\n%f\n%f", &countdown->elapsed_time, &countdown->hour, &countdown->minute, &countdown->second, &countdown->time, &countdown->OFFSET) != 6) {
-        countdown->hour = temps.hour;
-        countdown->minute = temps.minute;
-        countdown->second = temps.second;
-        countdown->elapsed_time = temps.elapsed_time;
-        countdown->OFFSET = temps.OFFSET;
+    if (file == NULL) {
+        countdown->hour = config.map.start_countdown_hour;
+        countdown->minute = config.map.start_countdown_minute;
+        countdown->second = config.map.start_countdown_second;
+        countdown->elapsed_time = 0;
+        countdown->OFFSET = config.map.start_hour;
+        return 0;
     }
-    if (file != NULL) {
-        fclose(file);
+
+    char buffer[1024];
+    fread(buffer, sizeof(char), sizeof(buffer) - 1, file);
+    fclose(file);
+
+    cJSON *json = cJSON_Parse(buffer);
+    if (json == NULL) {
+        countdown->hour = config.map.start_countdown_hour;
+        countdown->minute = config.map.start_countdown_minute;
+        countdown->second = config.map.start_countdown_second;
+        countdown->elapsed_time = 0;
+        countdown->OFFSET = config.map.start_hour;
+        return 0;
     }
+
+    cJSON *elapsed_time = cJSON_GetObjectItem(json, "elapsed_time");
+    cJSON *hour = cJSON_GetObjectItem(json, "hour");
+    cJSON *minute = cJSON_GetObjectItem(json, "minute");
+    cJSON *second = cJSON_GetObjectItem(json, "second");
+    cJSON *time = cJSON_GetObjectItem(json, "time");
+    cJSON *OFFSET = cJSON_GetObjectItem(json, "OFFSET");
+
+    if (elapsed_time && hour && minute && second && time && OFFSET) {
+        countdown->elapsed_time = elapsed_time->valueint;
+        countdown->hour = hour->valueint;
+        countdown->minute = minute->valueint;
+        countdown->second = second->valueint;
+        countdown->time = time->valuedouble;
+        countdown->OFFSET = OFFSET->valuedouble;
+    } else {
+        countdown->hour = config.map.start_countdown_hour;
+        countdown->minute = config.map.start_countdown_minute;
+        countdown->second = config.map.start_countdown_second;
+        countdown->elapsed_time = 0;
+        countdown->OFFSET = config.map.start_hour;
+    }
+
+    cJSON_Delete(json);
     return 1;
 }
 
 void update_time(time *countdown) {
     countdown->second--;
     countdown->elapsed_time++;
-    countdown->time = fmod(countdown->elapsed_time/ 60.0, 24.0) + countdown->OFFSET;
+    countdown->time = fmod(countdown->elapsed_time / 60.0, 24.0) + countdown->OFFSET;
     if (countdown->second <= 0) {
         countdown->second = 59;
         countdown->minute--;
@@ -44,18 +79,25 @@ void update_time(time *countdown) {
 
 void enregistrer_time(time *countdown, char *save) {
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "./saves/%s/config/state.txt", save);
+    snprintf(filepath, sizeof(filepath), "./saves/%s/source/state.json", save);
     FILE *file = fopen(filepath, "w");
     if (file) {
-        fprintf(file, "%d\n", countdown->elapsed_time);
-        fprintf(file, "%d\n", countdown->hour);
-        fprintf(file, "%d\n", countdown->minute);
-        fprintf(file, "%d\n", countdown->second);
-        fprintf(file, "%f\n", countdown->time);
-        fprintf(file, "%f\n", countdown->OFFSET);
+        cJSON *json = cJSON_CreateObject();
+        cJSON_AddNumberToObject(json, "elapsed_time", countdown->elapsed_time);
+        cJSON_AddNumberToObject(json, "hour", countdown->hour);
+        cJSON_AddNumberToObject(json, "minute", countdown->minute);
+        cJSON_AddNumberToObject(json, "second", countdown->second);
+        cJSON_AddNumberToObject(json, "time", countdown->time);
+        cJSON_AddNumberToObject(json, "OFFSET", countdown->OFFSET);
+
+        char *json_string = cJSON_Print(json);
+        fprintf(file, "%s\n", json_string);
+
+        free(json_string);
+        cJSON_Delete(json);
         fclose(file);
     } else {
-        logMessage("Erreur ouverture fichier state.txt");
+        logMessage("Erreur ouverture fichier state.json");
     }
 }
 

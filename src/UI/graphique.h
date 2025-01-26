@@ -6,7 +6,7 @@
 #include "../map/procedural.h"
 #include "../game/game.h"
 #include "../entities/character.h"
-#include "../entities/attack.h"  // Ajout de cette inclusion
+
 
 #define LARGEUR_CASE 16
 #define HAUTEUR_CASE 16

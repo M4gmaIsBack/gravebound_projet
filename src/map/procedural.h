@@ -4,8 +4,12 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
+#include "../game/config.h"
+
 #define LARGEUR_CASE 16
 #define HAUTEUR_CASE 16
+
+extern Config config;
 
 typedef struct {
     char *texture_path;
@@ -19,8 +23,8 @@ typedef struct {
     int y;
     char *texture_path;
     structure structure;
-    SDL_Texture *texture;          // Texture modifiée
-    SDL_Texture *originalTexture;  // Texture originale
+    SDL_Texture *texture;         
+    SDL_Texture *originalTexture;  
     int region;
     float brightness_R;
     float brightness_G;
@@ -34,12 +38,7 @@ typedef struct {
     char **regions;
 } carte;
 
-typedef struct {
-    unsigned int seed;
-    float scale;
-    float amplitude;
-    int taille;
-} GenerationParams;
+
 
 GenerationParams initGenerationParams();
 

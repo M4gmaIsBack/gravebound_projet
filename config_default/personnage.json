@@ -1,0 +1,7 @@
+{
+    "vie_max": [100.0],
+    "force_attaque_max": [15.0],
+    "vitesse_max": [5.0],
+    "defense_max": [5.0],
+    "max_skills": [10]
+}

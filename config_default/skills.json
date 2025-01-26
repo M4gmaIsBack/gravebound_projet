@@ -1,0 +1,9 @@
+{
+    "name": ["Knockback", "Knockback", "Knockback", "Teleport", "Teleport", "Teleport"],
+    "level": [1, 2, 3, 1, 2, 3],
+    "range": [10, 15, 20, 10, 15, 20],
+    "maxExperience": [1000, 2000, 3000, 1500, 2500, 3500],
+    "cooldown": [5, 7, 10, 5, 7, 10],
+    "lastUsed": [0, 0, 0, 0, 0, 0],
+    "damage": [15, 25, 35, 20, 30, 40]
+}
