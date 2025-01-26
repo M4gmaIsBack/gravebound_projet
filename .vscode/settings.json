@@ -13,7 +13,8 @@
         "sdl_image.h": "c",
         "game.h": "c",
         "skills.h": "c",
-        "sdl.h": "c"
+        "sdl.h": "c",
+        "base.h": "c"
     },
     "makefile.configureOnOpen": false
 }

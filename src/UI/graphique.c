@@ -11,6 +11,7 @@
 #include "map.h"
 #include "../entities/zombies.h"
 #include "../UI/minimap.h"
+#include "../buildings/base.h"
 
 
 int initGraphique(Jeu *jeu) {
@@ -57,6 +58,9 @@ int initGraphique(Jeu *jeu) {
     SDL_RenderSetLogicalSize(jeu->renderer, jeu->largeurEcran, jeu->hauteurEcran);
     SDL_SetRenderDrawBlendMode(jeu->renderer, SDL_BLENDMODE_BLEND);
 
+    // Initialize base coordinates
+    jeu->base.x = jeu->largeurEcran / 2;
+    jeu->base.y = jeu->hauteurEcran / 2;
     return 1;
 }
 
@@ -64,6 +68,12 @@ void init_carte(Jeu *jeu, char *save) {
     GenerationParams params = chargerParams(save);
     jeu->map = creerCarte(params.taille);
     jeu->map = genererCarte(jeu->map, params);
+
+    jeu->base = init_base(jeu);
+
+    // Set base coordinates to the center of the map
+    jeu->base.x = (jeu->map.taille * LARGEUR_CASE) / 2;
+    jeu->base.y = (jeu->map.taille * HAUTEUR_CASE) / 2;
 
     if (!chargerCarte(jeu)) {
         logMessage("Erreur chargement carte");
@@ -101,7 +111,6 @@ void majRendu(Jeu *jeu) {
     SDL_SetRenderDrawColor(jeu->renderer, 0, 0, 0, 255);
     SDL_RenderClear(jeu->renderer);
 
-    // Calculer la zone visible avec une marge plus petite
     int blocsVisiblesX = (jeu->largeurEcran / LARGEUR_CASE) + 2;
     int blocsVisiblesY = (jeu->hauteurEcran / HAUTEUR_CASE) + 2;
 
@@ -139,14 +148,20 @@ void majRendu(Jeu *jeu) {
 
     render_attacks(jeu->renderer, jeu, joueurCarteX, joueurCarteY);
     
-    mettre_a_jour_zombies(joueurCarteX, joueurCarteY);
+    mettre_a_jour_zombies(jeu);
     
     SDL_Texture* zombieTexture = obtenirTexture(jeu->renderer, "./assets/zombies/zombies_spritesheet.png");
     if (zombieTexture) {
         afficher_zombies(jeu, zombieTexture, joueurCarteX, joueurCarteY, centreEcranX, centreEcranY);
     }
 
+    SDL_Texture* baseTexture = obtenirTexture(jeu->renderer, "./assets/map/artefacts/house1.png");
+    if (baseTexture) {
+        afficher_base(jeu, baseTexture, &jeu->base);
+    }
+
     afficherMinimap(jeu);
 
     SDL_RenderPresent(jeu->renderer);
 }
+

@@ -6,6 +6,15 @@
 #include "../logs/logging.h"
 
 typedef struct {
+    int x, y;
+    int health, max_health;
+    int range;
+    int damage;
+    int attack_cooldown;
+    int last_attack_time;
+} Base;
+
+typedef struct {
     int sante;
     int puissance_attaque;
     float vitesse;
@@ -18,7 +27,9 @@ typedef struct {
     int currentFrame;          
     int totalFrames;           
     int direction;         
-    int moving;                
+    int moving;
+    int target_x;
+    int target_y;                
 } Zombie;
 
 typedef struct {

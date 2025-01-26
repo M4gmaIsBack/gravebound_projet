@@ -48,13 +48,39 @@ int verifier_collision_zombies(int x, int y, int zombie_actuel) {
     return 0; // Pas de collision
 }
 
-void deplacer_vers_joueur(Zombie* zombie, int joueur_x, int joueur_y) {
+void deplacer_vers_cible(Zombie* zombie, Jeu* jeu) {
     if (zombie == NULL) return;
+
+    int dx, dy;
+    float distance;
+
+    int centreEcranX = jeu->largeurEcran / 2;
+    int centreEcranY = jeu->hauteurEcran / 2;
+    
+    int joueurCarteX = centreEcranX - jeu->carteX;
+    int joueurCarteY = centreEcranY - jeu->carteY;
+
+    int baseCarteX = centreEcranX - jeu->base.x;
+    int baseCarteY = centreEcranY - jeu->base.y;
     
     // Calculer la direction souhaitée
-    int dx = joueur_x - zombie->x;
-    int dy = joueur_y - zombie->y;
-    float distance = sqrt(dx * dx + dy * dy);
+    int dx_base = baseCarteX - zombie->x;
+    int dy_base = baseCarteY - zombie->y;
+    float distance_base = sqrt(dx_base * dx_base + dy_base * dy_base);
+
+    int dx_joueur = joueurCarteX - zombie->x;
+    int dy_joueur = joueurCarteY - zombie->y;
+    float distance_joueur = sqrt(dx_joueur * dx_joueur + dy_joueur * dy_joueur);
+
+    if(distance_base < distance_joueur) {
+        dx = dx_base;
+        dy = dy_base;
+        distance = distance_base;
+    } else {
+        dx = dx_joueur;
+        dy = dy_joueur;
+        distance = distance_joueur;
+    }
 
     // Mettre à jour la direction d'animation
     if (abs(dx) > abs(dy)) {
@@ -130,13 +156,17 @@ void spawn_zombies(int centreX, int centreY, int rayon) {
     initialiser_zombies_autour_position(nouveaux_zombies, centreX, centreY, rayon);
 }
 
-void mettre_a_jour_zombies(int joueur_x, int joueur_y) {
+void mettre_a_jour_zombies(Jeu *jeu) {
     nettoyer_zombies(); // Supprime les zombies morts
     for (int i = 0; i < nombre_zombies; i++) {
-        deplacer_vers_joueur(zombies[i], joueur_x, joueur_y);
+        deplacer_vers_cible(zombies[i], jeu);
 
         if (zombies[i]->vitesse < zombies[i]->vitesse_max) {
             zombies[i]->vitesse += 0.005;
+
+            if (zombies[i]->vitesse > zombies[i]->vitesse_max) {
+                zombies[i]->vitesse = zombies[i]->vitesse_max;
+            }
         }
     }
 }

@@ -16,8 +16,8 @@ extern int nombre_zombies;
 extern Config config;
 extern int vague;
 
-void deplacer_vers_joueur(Zombie* zombie, int joueur_x, int joueur_y);
-void mettre_a_jour_zombies(int joueur_x, int joueur_y);
+void deplacer_vers_cible(Zombie* zombie, Jeu* jeu);
+void mettre_a_jour_zombies(Jeu *jeu);
 void initialiser_zombies_autour_position(int nombre, int centreX, int centreY, int rayon);
 void afficher_zombies(Jeu *jeu, SDL_Texture *zombieTexture, int joueurCarteX, int joueurCarteY, int centreEcranX, int centreEcranY);
 int verifier_collision_zombies(int x, int y, int zombie_actuel);
@@ -27,4 +27,4 @@ Zombie *creer_zombie(int sante, int puissance_attaque, float vitesse, float vite
 void enregistrer_zombies(char *save);
 void charger_zombies(char *save);
 
-#endif // ZOMBIES_H
+#endif

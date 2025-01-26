@@ -19,6 +19,7 @@ typedef struct {
     int largeurEcran, hauteurEcran;
     carte map;
     time countdown;
+    Base base;
 } Jeu;
 
 typedef struct {

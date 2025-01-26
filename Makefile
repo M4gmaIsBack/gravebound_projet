@@ -31,7 +31,8 @@ SRC = $(SRC_DIR)/main.c \
       $(SRC_DIR)/entities/skills.c \
       $(SRC_DIR)/entities/attack.c \
       $(SRC_DIR)/UI/minimap.c \
-      $(SRC_DIR)/game/config.c
+      $(SRC_DIR)/game/config.c \
+      $(SRC_DIR)/buildings/base.c
 
 # Conversion des fichiers sources en fichiers objets
 OBJ = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
@@ -40,7 +41,7 @@ OBJ = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 all: $(EXEC)
 
 # Création automatique des répertoires nécessaires
-$(shell mkdir -p $(OBJ_DIR)/UI $(OBJ_DIR)/logs $(OBJ_DIR)/controller $(OBJ_DIR)/audio $(OBJ_DIR)/game $(OBJ_DIR)/map $(OBJ_DIR)/entities $(BIN_DIR) $(SAVES_DIR))
+$(shell mkdir -p $(OBJ_DIR)/UI $(OBJ_DIR)/logs $(OBJ_DIR)/controller $(OBJ_DIR)/audio $(OBJ_DIR)/game $(OBJ_DIR)/map $(OBJ_DIR)/entities $(OBJ_DIR)/buildings $(BIN_DIR) $(SAVES_DIR))
 
 # Génération de l'exécutable final
 $(EXEC): $(OBJ)

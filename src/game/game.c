@@ -7,9 +7,9 @@
 #include "../entities/attack.h"
 #include <SDL2/SDL.h>
 #include <sys/stat.h>
-#include <errno.h>
 #include "../entities/zombies.h"
 #include <cjson/cJSON.h>
+#include "../buildings/base.h"
 
 int vague = 0;
 
@@ -31,7 +31,6 @@ int initJeu(Game *game) {
     }
 
     init_attacks(game->jeu.renderer);
-
 
     logMessage("Jeu initialisé avec succès");
     return 1;

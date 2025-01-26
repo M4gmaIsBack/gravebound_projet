@@ -130,11 +130,7 @@ carte genererCarte(carte map, GenerationParams params) {
             map.cases[i][j].region = region;
             map.cases[i][j].texture_path = map.regions[region];
 
-            if (i == map.taille / 2 && j == map.taille / 2) {
-                map.cases[i][j].structure.texture_path = "./assets/map/artefacts/house1.png";
-                map.cases[i][j].structure.height = 700;
-                map.cases[i][j].structure.width = 700;
-            } else if (map.cases[i][j].region == 4 && rand() / (float)RAND_MAX < 0.0005) {
+            if (map.cases[i][j].region == 4 && rand() / (float)RAND_MAX < 0.0005) {
                 map.cases[i][j].structure.texture_path = "./assets/map/artefacts/tree.png";
                 map.cases[i][j].structure.height = 100;
                 map.cases[i][j].structure.width = 100;

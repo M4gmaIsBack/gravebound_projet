@@ -38,10 +38,7 @@ int skill_knockback(Personnage *personnage, int slot_number, int x, int y) {
     if (personnage->skills[slot_number].cooldown == 0) {
         personnage->skills[slot_number].lastUsed = 100;
         personnage->skills[slot_number].cooldown = 0;
-
-
     
-
         for (int i = 0; i < nombre_zombies; i++) {
             int dx = zombies[i]->x - x;
             int dy = zombies[i]->y - y;
