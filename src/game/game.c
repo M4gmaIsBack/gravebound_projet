@@ -4,6 +4,7 @@
 #include "../controller/controller.h"
 #include "../logs/logging.h"
 #include "../entities/character.h"
+#include "../entities/attack.h"
 #include <SDL2/SDL.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -28,6 +29,9 @@ int initJeu(Game *game) {
         logMessage("Renderer est nul après initGraphique");
         return 0;
     }
+
+    init_attacks(game->jeu.renderer);
+
 
     logMessage("Jeu initialisé avec succès");
     return 1;
@@ -64,6 +68,24 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
             if (event.type == SDL_CONTROLLERAXISMOTION) {
                 gererDeplacementCarte(&event, &game->jeu, personnage);
             }
+
+             if (event.type == SDL_CONTROLLERDEVICEADDED) {
+                game->using_controller = 1;
+            }
+            if (event.type == SDL_CONTROLLERDEVICEREMOVED) {
+                game->using_controller = 0;
+            }
+
+            // Gestion des attaques à la souris
+            if (!game->using_controller) {
+                int mouseX, mouseY;
+                SDL_GetMouseState(&mouseX, &mouseY);
+                
+                int playerScreenX = game->jeu.largeurEcran / 2;
+                int playerScreenY = game->jeu.hauteurEcran / 2;
+                
+                handle_mouse_attack(mouseX, mouseY, playerScreenX, playerScreenY);
+            }
         }
 
         static Uint32 lastUpdateTimeCD = 0;
@@ -97,6 +119,11 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
             personnage->vitesse += 0.005;
         }
 
+        int joueurCarteX = game->jeu.largeurEcran / 2 - game->jeu.carteX;
+        int joueurCarteY = game->jeu.hauteurEcran / 2 - game->jeu.carteY;
+
+        update_attacks(&game->jeu, joueurCarteX, joueurCarteY, game->using_controller);
+
         majRendu(&game->jeu);
 
         enregistrer_coordonnees(&game->jeu, save);
@@ -111,6 +138,8 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
 // Nettoie les ressources du jeu
 void nettoyerRessources(Game *game) {
     logMessage("Nettoyage des ressources du jeu");
+
+    cleanup_attacks();
 
     fermerGraphique(&game->jeu);
 

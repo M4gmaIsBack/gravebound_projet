@@ -24,6 +24,7 @@ typedef struct {
 typedef struct {
     int running;
     Jeu jeu;
+    int using_controller;
 } Game;
 
 extern Config config;

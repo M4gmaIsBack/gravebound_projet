@@ -6,9 +6,11 @@
 #include "../controller/controller.h"
 #include "../entities/character.h"
 #include "../map/procedural.h"
+#include "../entities/attack.h"
 #include "cache.h"
 #include "map.h"
 #include "../entities/zombies.h"
+#include "../UI/minimap.h"
 
 
 int initGraphique(Jeu *jeu) {
@@ -134,6 +136,8 @@ void majRendu(Jeu *jeu) {
     
     int joueurCarteX = centreEcranX - jeu->carteX;
     int joueurCarteY = centreEcranY - jeu->carteY;
+
+    render_attacks(jeu->renderer, jeu, joueurCarteX, joueurCarteY);
     
     mettre_a_jour_zombies(joueurCarteX, joueurCarteY);
     
@@ -141,6 +145,8 @@ void majRendu(Jeu *jeu) {
     if (zombieTexture) {
         afficher_zombies(jeu, zombieTexture, joueurCarteX, joueurCarteY, centreEcranX, centreEcranY);
     }
+
+    afficherMinimap(jeu);
 
     SDL_RenderPresent(jeu->renderer);
 }
