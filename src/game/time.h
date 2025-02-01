@@ -21,5 +21,6 @@ int init_time(time *countdown, char *save);
 void update_time(time *countdown);
 void display_time(time *countdown);
 void enregistrer_time(time *countdown, char *save);
+void skip_day(time *countdown);
 
 #endif

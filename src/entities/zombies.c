@@ -8,11 +8,14 @@
 #include "../logs/logging.h"
 #include "../entities/character.h"
 #include <cjson/cJSON.h>
+#include "../UI/cache.h"
 
-Zombie* zombies[MAX_ZOMBIES];
+
+Zombie** zombies = NULL;
 int nombre_zombies = 0;
+int capacite_zombies = 0;
 
-Zombie* creer_zombie(int sante, int puissance_attaque, float vitesse, float vitesse_max, int x, int y, const char* type) {
+Zombie* creer_zombie(float sante, float puissance_attaque, float vitesse, float vitesse_max, int x, int y, const char* type) {
     Zombie* nouveau_zombie = (Zombie*)malloc(sizeof(Zombie));
     if (nouveau_zombie == NULL) {
         fprintf(stderr, "Échec de l'allocation de mémoire pour le nouveau zombie\n");
@@ -21,16 +24,22 @@ Zombie* creer_zombie(int sante, int puissance_attaque, float vitesse, float vite
     nouveau_zombie->sante = sante;
     nouveau_zombie->puissance_attaque = puissance_attaque;
     nouveau_zombie->vitesse = vitesse;
-    nouveau_zombie->vitesse_max = vitesse;
+    nouveau_zombie->vitesse_max = vitesse_max;
     nouveau_zombie->x = x;
     nouveau_zombie->y = y;
     nouveau_zombie->type = strdup(type);
-    nouveau_zombie->frameWidth = 32;
-    nouveau_zombie->frameHeight = 32;
+    if (strcmp(type, "boss") == 0) {
+        nouveau_zombie->frameWidth = 128;  // Increase size for boss
+        nouveau_zombie->frameHeight = 128; // Increase size for boss
+    } else {
+        nouveau_zombie->frameWidth = 32;
+        nouveau_zombie->frameHeight = 32;
+    }
     nouveau_zombie->currentFrame = 0;
     nouveau_zombie->totalFrames = 3;
     nouveau_zombie->direction = 0;
     nouveau_zombie->moving = 0;
+    nouveau_zombie->texture = NULL;
     return nouveau_zombie;
 }
 
@@ -122,6 +131,11 @@ void nettoyer_zombies() {
             zombies[--nombre_zombies] = NULL;
         }
     }
+    // Réduire la capacité si nécessaire
+    if (nombre_zombies < capacite_zombies / 2) {
+        capacite_zombies /= 2;
+        zombies = realloc(zombies, capacite_zombies * sizeof(Zombie*));
+    }
 }
 
 void spawn_zombies(int centreX, int centreY, int rayon) {
@@ -138,11 +152,18 @@ void mettre_a_jour_zombies(int joueur_x, int joueur_y) {
         if (zombies[i]->vitesse < zombies[i]->vitesse_max) {
             zombies[i]->vitesse += 0.005;
         }
+
+        zombie_behaviour();
     }
 }
 
 void initialiser_zombies_autour_position(int nombre, int centreX, int centreY, int rayon) {
-    for (int i = 0; i < nombre && nombre_zombies < MAX_ZOMBIES; i++) {
+    if (nombre_zombies + nombre > capacite_zombies) {
+        capacite_zombies = (nombre_zombies + nombre) * 2;
+        zombies = realloc(zombies, capacite_zombies * sizeof(Zombie*));
+    }
+
+    for (int i = 0; i < nombre && nombre_zombies < config.zombies.max_zombies[vague]; i++) {
         int angleAleatoire = rand() % 360;
         int distanceAleatoire = rayon + (rand() % 100);
 
@@ -151,9 +172,62 @@ void initialiser_zombies_autour_position(int nombre, int centreX, int centreY, i
         int zombieX = centreX + (int)(cos(angleRad) * distanceAleatoire);
         int zombieY = centreY + (int)(sin(angleRad) * distanceAleatoire);
 
-        logMessage("Zombie %d apparaît en (%d, %d)", nombre_zombies, zombieX, zombieY);
+        const char *type[] = {"boss", "fast", "tank", "normal"};
 
-        zombies[nombre_zombies++] = creer_zombie(config.zombies.max_health[vague], config.zombies.max_damage[vague], config.zombies.max_speed[vague], config.zombies.max_speed[vague], zombieX, zombieY, "normal");
+        int rates[] = {5, 25, 45, 100};
+
+        int typeAleatoire = rand() % 100;
+        int typeZombie = 0;
+        for (int j = 0; j < 4; j++) {
+            if (typeAleatoire < rates[j]) {
+                typeZombie = j;
+                break;
+            }
+        }
+
+        logMessage("Zombie %d %s apparaît en (%d, %d)", nombre_zombies, type[typeZombie], zombieX, zombieY);
+
+        zombies[nombre_zombies++] = creer_zombie(config.zombies.max_health[vague], config.zombies.max_damage[vague], config.zombies.max_speed[vague], config.zombies.max_speed[vague], zombieX, zombieY, type[typeZombie]);
+    }
+}
+
+void zombie_behaviour() {
+    for (int i = 0; i < nombre_zombies; i++) {
+        if (strcmp(zombies[i]->type, "fast") == 0) {
+            zombies[i]->vitesse_max = config.zombies.max_speed[vague] * 1.7;
+
+            if (zombies[i]->vitesse < zombies[i]->vitesse_max * 1.7) {
+                zombies[i]->vitesse += 0.05;
+            } else {
+                zombies[i]->vitesse = zombies[i]->vitesse_max * 1.7;
+            }
+
+        } else if (strcmp(zombies[i]->type, "tank") == 0) {
+            zombies[i]->sante += 0.00007 * config.zombies.max_health[vague];
+            if (zombies[i]->sante > config.zombies.max_health[vague]) {
+                zombies[i]->sante = config.zombies.max_health[vague];
+            }
+
+            zombies[i]->vitesse = zombies[i]->vitesse_max * 0.8;
+
+        } else if (strcmp(zombies[i]->type, "boss") == 0) {
+            zombies[i]->sante += 0.00007 * config.zombies.max_health[vague];
+            if (zombies[i]->sante > (vague + 1) * config.zombies.max_health[vague]) {
+                zombies[i]->sante =  (vague + 1) * config.zombies.max_health[vague];
+            }
+
+            if (zombies[i]->puissance_attaque < vague * config.zombies.max_damage[vague]) {
+                zombies[i]->puissance_attaque += 0.0001 * config.zombies.max_damage[vague];
+            }
+
+            zombies[i]->vitesse_max = config.zombies.max_speed[vague] * 1.5;
+
+            if (zombies[i]->vitesse < zombies[i]->vitesse_max * 1.3) {
+                zombies[i]->vitesse += 0.05;
+            } else {
+                zombies[i]->vitesse = zombies[i]->vitesse_max * 1.3;
+            }
+        }
     }
 }
 
@@ -200,7 +274,7 @@ void charger_zombies(char *save) {
         return;
     }
 
-    char buffer[4096];
+    char buffer[4096 * 10];
     fread(buffer, sizeof(char), sizeof(buffer) - 1, fichier);
     fclose(fichier);
 
@@ -217,10 +291,12 @@ void charger_zombies(char *save) {
 
     cJSON *zombies_array = cJSON_GetObjectItem(json, "zombies");
     if (zombies_array) {
-        for (int i = 0; i < cJSON_GetArraySize(zombies_array); i++) {
+        capacite_zombies = cJSON_GetArraySize(zombies_array);
+        zombies = realloc(zombies, capacite_zombies * sizeof(Zombie*));
+        for (int i = 0; i < capacite_zombies; i++) {
             cJSON *zombie_json = cJSON_GetArrayItem(zombies_array, i);
-            int sante = cJSON_GetObjectItem(zombie_json, "sante")->valueint;
-            int puissance_attaque = cJSON_GetObjectItem(zombie_json, "puissance_attaque")->valueint;
+            int sante = cJSON_GetObjectItem(zombie_json, "sante")->valuedouble;
+            int puissance_attaque = cJSON_GetObjectItem(zombie_json, "puissance_attaque")->valuedouble;
             float vitesse = cJSON_GetObjectItem(zombie_json, "vitesse")->valuedouble;
             float vitesse_max = cJSON_GetObjectItem(zombie_json, "vitesse_max")->valuedouble;
             int x = cJSON_GetObjectItem(zombie_json, "x")->valueint;
@@ -229,12 +305,17 @@ void charger_zombies(char *save) {
 
             zombies[i] = creer_zombie(sante, puissance_attaque, vitesse, vitesse_max, x, y, type);
         }
+        nombre_zombies = capacite_zombies;
     }
 
     cJSON_Delete(json);
 }
 
-void afficher_zombies(Jeu *jeu, SDL_Texture *zombieTexture, int joueurCarteX, int joueurCarteY, int centreEcranX, int centreEcranY) {
+void final_wave() {
+    vague = 0;
+}
+
+void afficher_zombies(Jeu *jeu, int joueurCarteX, int joueurCarteY, int centreEcranX, int centreEcranY) {
     for (int i = 0; i < nombre_zombies; i++) {
         int zombieEcranX = zombies[i]->x - joueurCarteX + centreEcranX;
         int zombieEcranY = zombies[i]->y - joueurCarteY + centreEcranY;
@@ -250,6 +331,18 @@ void afficher_zombies(Jeu *jeu, SDL_Texture *zombieTexture, int joueurCarteX, in
         }
 
         // Rendu du zombie
+
+        if (zombies[i]->texture == NULL && strcmp(zombies[i]->type, "boss") == 1) {
+            zombies[i]->texture = obtenirTexture(jeu->renderer, "./assets/zombies/zombies_spritesheet.png");        
+        } else if (zombies[i]->texture == NULL && strcmp(zombies[i]->type, "boss") == 0) {
+            zombies[i]->texture = obtenirTexture(jeu->renderer, "./assets/zombies/zombies_boss_spritesheet_.png");
+        }
+
+        if (zombies[i]->texture == NULL) {
+            logMessage("Erreur chargement texture zombie");
+            return;
+        }
+            
         SDL_Rect srcRect = {
             zombies[i]->currentFrame * zombies[i]->frameWidth,
             zombies[i]->direction * zombies[i]->frameHeight,
@@ -264,7 +357,7 @@ void afficher_zombies(Jeu *jeu, SDL_Texture *zombieTexture, int joueurCarteX, in
             zombies[i]->frameHeight 
         };
 
-        SDL_RenderCopy(jeu->renderer, zombieTexture, &srcRect, &destRect);
+        SDL_RenderCopy(jeu->renderer, zombies[i]->texture, &srcRect, &destRect);
         dessinerBarreDeVie(jeu->renderer, zombieEcranX, zombieEcranY - 10, 32, 5, zombies[i]->sante, 100);
     }
 }

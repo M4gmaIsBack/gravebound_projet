@@ -158,25 +158,22 @@ void fermerManette() {
 }
 
 // Gestion des déplacements via clavier
-void gererDeplacementClavier(SDL_Event *event, Jeu *jeu, Personnage *personnage) {
-    switch (event->key.keysym.sym) {
-
-        case SDLK_z: // Haut
-            jeu->carteY += personnage->vitesse;
-            // logMessage("Deplacement haut (clavier)");
-            break;
-        case SDLK_s: // Bas
-            jeu->carteY -= personnage->vitesse;
-            // logMessage("Deplacement bas (clavier)");
-            break;
-        case SDLK_q: // Gauche
-            jeu->carteX += personnage->vitesse;
-            // logMessage("Deplacement gauche (clavier)");
-            break;
-        case SDLK_d: // Droite
-            jeu->carteX -= personnage->vitesse;
-            // logMessage("Deplacement droite (clavier)");
-            break;
+void gererDeplacementClavier(const Uint8 *keystate, Jeu *jeu, Personnage *personnage) {
+    if (keystate[SDL_SCANCODE_W]) { // Haut
+        jeu->carteY += personnage->vitesse;
+        // logMessage("Deplacement haut (clavier)");
+    }
+    if (keystate[SDL_SCANCODE_S]) { // Bas
+        jeu->carteY -= personnage->vitesse;
+        // logMessage("Deplacement bas (clavier)");
+    }
+    if (keystate[SDL_SCANCODE_A]) { // Gauche
+        jeu->carteX += personnage->vitesse;
+        // logMessage("Deplacement gauche (clavier)");
+    }
+    if (keystate[SDL_SCANCODE_D]) { // Droite
+        jeu->carteX -= personnage->vitesse;
+        // logMessage("Deplacement droite (clavier)");
     }
 }
 

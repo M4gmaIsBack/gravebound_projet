@@ -65,6 +65,8 @@ carte creerCarte(int taille) {
             map.cases[i][j].region = 0;
             map.cases[i][j].x = i;
             map.cases[i][j].y = j;
+            map.cases[i][j].structure.height = 0;
+            map.cases[i][j].structure.width = 0;  
         }
     }
 
@@ -101,6 +103,26 @@ int region_plaines(float value) {
     else return 5;
 }
 
+int region_neige(float value) {
+    if (value > 0.6) return 2;
+    else if (value > -0.15) return 3;
+    else if (value > -0.48) return 0;
+    else if (value > -0.65) return 3;
+    else if (value > -0.78) return 4;
+    else if (value > -0.84) return 2;
+    else return 5;
+}
+
+int regon_lave(float value) {
+    if (value > 0.3) return 4;
+    else if (value > 0.2) return 2;
+    else if (value > -0.25) return 5;
+    else if (value > -0.3) return 2;
+    else if (value > -0.65) return 4;
+    else if (value > -0.8) return 2;
+    else return 5;
+}
+
 float noiseToBrightness(float value) {
     if (value < -0.7) return 255;
 
@@ -121,8 +143,20 @@ carte genererCarte(carte map, GenerationParams params) {
             float y = j * params.scale;
             float noise = simpleNoise(x, y, gradients);
 
-            // Convertit le bruit en une région
-            int region = region_plaines(noise);
+            int region;
+
+            if (strcmp(config.map.region, "iles") == 0) {
+                region = region_iles(noise);
+            } else if (strcmp(config.map.region, "plaines") == 0) {
+                region = region_plaines(noise);
+            } else if (strcmp(config.map.region, "neige") == 0) {
+                region = region_neige(noise);
+            } else if (strcmp(config.map.region, "lave") == 0) {
+                region = regon_lave(noise);
+            } else {
+                region = 0;
+            }
+
             float brightness = noiseToBrightness(noise);
             map.cases[i][j].brightness_R = brightness;
             map.cases[i][j].brightness_G = brightness;
@@ -134,7 +168,7 @@ carte genererCarte(carte map, GenerationParams params) {
                 map.cases[i][j].structure.texture_path = "./assets/map/artefacts/house1.png";
                 map.cases[i][j].structure.height = 700;
                 map.cases[i][j].structure.width = 700;
-            } else if (map.cases[i][j].region == 4 && rand() / (float)RAND_MAX < 0.0005) {
+            } else if ((map.cases[i][j].region == 4 || map.cases[i][j].region == 3) && rand() / (float)RAND_MAX < 0.0005) {
                 map.cases[i][j].structure.texture_path = "./assets/map/artefacts/tree.png";
                 map.cases[i][j].structure.height = 100;
                 map.cases[i][j].structure.width = 100;
@@ -142,7 +176,7 @@ carte genererCarte(carte map, GenerationParams params) {
                 map.cases[i][j].structure.texture_path = NULL;
             }
 
-            if (map.cases[i][j].region == 4 && map.cases[i][j].structure.texture_path == NULL && rand() / (float)RAND_MAX < 0.001) {
+            if ((map.cases[i][j].region == 4 || map.cases[i][j].region == 2 || map.cases[i][j].region == 5) && map.cases[i][j].structure.texture_path == NULL && rand() / (float)RAND_MAX < 0.001) {
 
                 char *stones[] = {
                     "./assets/map/artefacts/rock7_1.png",

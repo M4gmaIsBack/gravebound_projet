@@ -62,18 +62,21 @@ int init_time(time *countdown, char *save) {
 
 void update_time(time *countdown) {
     countdown->second--;
-    countdown->elapsed_time++;
+    countdown->elapsed_time += 2;
     countdown->time = fmod(countdown->elapsed_time / 60.0, 24.0) + countdown->OFFSET;
-    if (countdown->second <= 0) {
+    if (countdown->second <= 0 && countdown->minute > 0) {
         countdown->second = 59;
         countdown->minute--;
-        if (countdown->minute <= 0) {
+        if (countdown->minute <= 0 && countdown->hour > 0) {
             countdown->minute = 59;
             countdown->hour--;
             if (countdown->hour <= 0) {
-                countdown->hour = 24;
+                countdown->hour = 0;
             }
         }
+    } else if (countdown->second <= 0 && countdown->minute <= 0) {
+        countdown->second = 0;
+        countdown->minute = 0;
     }
 }
 
@@ -102,7 +105,18 @@ void enregistrer_time(time *countdown, char *save) {
 }
 
 void display_time(time *countdown) {
-    // printf("Temps restant: %d:%d:%d\n", countdown->hour, countdown->minute, countdown->second);
-    // printf("Temps écoulé: %d\n", countdown->elapsed_time);
-    // printf("heure: %f\n", countdown->time);
+    printf("Temps restant: %d:%d:%d\n", countdown->hour, countdown->minute, countdown->second);
+    printf("Temps écoulé: %d\n", countdown->elapsed_time);
+    printf("heure: %f\n", countdown->time);
+}
+
+void skip_day(time *countdown) {
+    if(countdown->time > 8 && countdown->time < 18) {
+        float diff = 18 - countdown->time;
+        printf("diff: %f\n", diff);
+        countdown->elapsed_time += diff * 60;
+    } else {
+        printf("nuh uh\n");
+        printf("time: %f\n", countdown->time);
+    }
 }

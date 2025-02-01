@@ -6,8 +6,8 @@
 #include "../logs/logging.h"
 
 typedef struct {
-    int sante;
-    int puissance_attaque;
+    float sante;
+    float puissance_attaque;
     float vitesse;
     float vitesse_max;
     int x;
@@ -18,7 +18,8 @@ typedef struct {
     int currentFrame;          
     int totalFrames;           
     int direction;         
-    int moving;                
+    int moving;  
+    SDL_Texture* texture;              
 } Zombie;
 
 typedef struct {

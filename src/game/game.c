@@ -10,6 +10,7 @@
 #include <errno.h>
 #include "../entities/zombies.h"
 #include <cjson/cJSON.h>
+#include "../map/map.h"
 
 int vague = 0;
 
@@ -32,7 +33,6 @@ int initJeu(Game *game) {
 
     init_attacks(game->jeu.renderer);
 
-
     logMessage("Jeu initialisé avec succès");
     return 1;
 }
@@ -40,6 +40,7 @@ int initJeu(Game *game) {
 // Boucle principale de jeu
 void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
     SDL_Event event;
+    const Uint8 *keystate = SDL_GetKeyboardState(NULL);
 
     logMessage("Début de la boucle principale");
 
@@ -54,13 +55,16 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
                 game->running = 0;
             }
 
+            if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_SPACE) {
+                skip_day(&game->jeu.countdown);
+            }
+
             if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_F11) {
                 toggleFullscreen(&game->jeu);
             }
 
             // Gestion des deplacements
-            if (event.type == SDL_KEYDOWN) {
-                gererDeplacementClavier(&event, &game->jeu, personnage);
+            if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
                 skill_selected = skill_selection(&event, game, personnage, skill_selected);      
                 skill_activation(&event, game, personnage, skill_selected);
             }
@@ -69,7 +73,7 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
                 gererDeplacementCarte(&event, &game->jeu, personnage);
             }
 
-             if (event.type == SDL_CONTROLLERDEVICEADDED) {
+            if (event.type == SDL_CONTROLLERDEVICEADDED) {
                 game->using_controller = 1;
             }
             if (event.type == SDL_CONTROLLERDEVICEREMOVED) {
@@ -88,6 +92,8 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
             }
         }
 
+        gererDeplacementClavier(keystate, &game->jeu, personnage);
+
         static Uint32 lastUpdateTimeCD = 0;
         Uint32 currentTimeCD = SDL_GetTicks();
         if (currentTimeCD > lastUpdateTimeCD + 1000) {
@@ -97,6 +103,10 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
 
             if (game->jeu.countdown.elapsed_time + game->jeu.countdown.OFFSET * 60 > (vague * 24 + game->jeu.countdown.OFFSET) * 60) {
                 vague++;
+            }
+
+            if(game->jeu.countdown.hour == 0 && game->jeu.countdown.minute == 0 && game->jeu.countdown.second == 0 && vague > 0) {
+                final_wave();
             }
 
             lastUpdateTimeCD = currentTimeCD;
@@ -124,8 +134,8 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
 
         update_attacks(&game->jeu, joueurCarteX, joueurCarteY, game->using_controller);
 
-        majRendu(&game->jeu);
-
+        majRendu(&game->jeu, personnage);
+        
         enregistrer_coordonnees(&game->jeu, save);
 
         SDL_Delay(16);

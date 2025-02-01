@@ -10,14 +10,14 @@ int charger_config_zombies(Config_values_zombies *zombies, char *save) {
     if (file == NULL) {
         file = fopen("./config_default/zombies.json", "r");
         if (file == NULL) {
-            printf("Erreur ouverture fichier zombies\n");
+            printf("Erreur ouverture fichier de config zombies\n");
             return 0;
         }
     }
 
-    char buffer[4096]; // Increase buffer size
+    char buffer[4096]; 
     size_t read_size = fread(buffer, sizeof(char), sizeof(buffer) - 1, file);
-    buffer[read_size] = '\0'; // Null-terminate the buffer
+    buffer[read_size] = '\0';
     fclose(file);
 
     cJSON *json = cJSON_Parse(buffer);
