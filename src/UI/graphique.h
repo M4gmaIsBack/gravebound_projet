@@ -27,7 +27,7 @@ int initGraphique(Jeu *jeu);
 void fermerGraphique(Jeu *jeu);
 int chargerCarte(Jeu *jeu);
 void chargerTextureChunk(chunk *c, SDL_Renderer *renderer);
-void majRendu(Jeu *jeu);
+void majRendu(Jeu *jeu, Personnage *personnage);
 void init_carte(Jeu *jeu, char *save);
 
 #endif

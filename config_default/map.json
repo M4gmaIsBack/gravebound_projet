@@ -1,10 +1,10 @@
 {
-    "map_size": 1000,
-    "region": "Forêt_sombre",
+    "map_size": 3000,
+    "region": "plaines",
     "scale": 0.004,
     "amplitude": 1.75,
-    "start_countdown_hour": 6,
+    "start_countdown_hour": 0,
     "start_countdown_minute": 30,
     "start_countdown_second": 0,
-    "start_hour": 20.00
+    "start_hour": 8.0
 }

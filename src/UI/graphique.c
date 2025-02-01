@@ -8,7 +8,7 @@
 #include "../map/procedural.h"
 #include "../entities/attack.h"
 #include "cache.h"
-#include "map.h"
+#include "../map/map.h"
 #include "../entities/zombies.h"
 #include "../UI/minimap.h"
 
@@ -96,7 +96,7 @@ void fermerGraphique(Jeu *jeu) {
     logMessage("Ressources graphiques libérées");
 }
 
-void majRendu(Jeu *jeu) {
+void majRendu(Jeu *jeu, Personnage *personnage) {
     // Clear avec noir
     SDL_SetRenderDrawColor(jeu->renderer, 0, 0, 0, 255);
     SDL_RenderClear(jeu->renderer);
@@ -114,7 +114,7 @@ void majRendu(Jeu *jeu) {
         for (int j = debutX; j < finX; j++) {
             chunk *currentChunk = &jeu->map.cases[i][j];
 
-            float light = light_calculator(jeu, i, j);
+            float light = map_light_calculator(jeu, i, j);
 
             afficher_chunk(currentChunk, jeu, i, j, light);
 
@@ -125,11 +125,13 @@ void majRendu(Jeu *jeu) {
         }
     }
 
+
     // Rendu du personnage
     const Uint8* state = SDL_GetKeyboardState(NULL);
+
     mettreAJourPersonnage(state);
     dessinerPersonnage(jeu->renderer, jeu->largeurEcran / 2 - 16, jeu->hauteurEcran / 2 - 24);
-    dessinerBarreDeVie(jeu->renderer, jeu->largeurEcran / 2 - 16, jeu->hauteurEcran / 2 - 32, 32, 5, obtenirViePersonnage(), 100);
+    dessinerBarreDeVie(jeu->renderer, jeu->largeurEcran / 2 - 16, jeu->hauteurEcran / 2 - 32, 32, 5, personnage->vie_actuelle, 100);
 
     int centreEcranX = jeu->largeurEcran / 2;
     int centreEcranY = jeu->hauteurEcran / 2;
@@ -141,10 +143,10 @@ void majRendu(Jeu *jeu) {
     
     mettre_a_jour_zombies(joueurCarteX, joueurCarteY);
     
-    SDL_Texture* zombieTexture = obtenirTexture(jeu->renderer, "./assets/zombies/zombies_spritesheet.png");
-    if (zombieTexture) {
-        afficher_zombies(jeu, zombieTexture, joueurCarteX, joueurCarteY, centreEcranX, centreEcranY);
-    }
+    afficher_zombies(jeu, joueurCarteX, joueurCarteY, centreEcranX, centreEcranY);
+
+    environnement_effects(jeu, personnage);
+
 
     afficherMinimap(jeu);
 
