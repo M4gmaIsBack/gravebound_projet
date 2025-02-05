@@ -132,7 +132,7 @@ int skill_selection(SDL_Event *event, Game *game, Personnage *personnage, int sl
     return slot_selected;
 }
 
-// Initialise la connexion avec la manette
+// initialisation de la manette (test derreur)
 int initManette() {
     if (SDL_NumJoysticks() < 1) {
         logMessage("Aucune manette détectée");
@@ -141,11 +141,11 @@ int initManette() {
 
     controller = SDL_GameControllerOpen(0);
     if (!controller) {
-        logMessage("Erreur lors de l'ouverture de la manette : %s", SDL_GetError());
+        logMessage("Erreur connexion manette : %s", SDL_GetError());
         return 0;
     }
 
-    logMessage("Manette détectée et initialisée");
+    logMessage("Manette détectée");
     return 1;
 }
 
@@ -157,7 +157,7 @@ void fermerManette() {
     }
 }
 
-// Gestion des déplacements via clavier
+// deplacement clavier/srousi
 void gererDeplacementClavier(const Uint8 *keystate, Jeu *jeu, Personnage *personnage) {
     if (keystate[SDL_SCANCODE_W]) { // Haut
         jeu->carteY += personnage->vitesse;
@@ -177,7 +177,7 @@ void gererDeplacementClavier(const Uint8 *keystate, Jeu *jeu, Personnage *person
     }
 }
 
-// Gestion des deplacements via la manette
+// deplacement manettes
 void gererDeplacementCarte(SDL_Event *event, Jeu *jeu, Personnage *personnage) {
     if (event->type == SDL_CONTROLLERAXISMOTION) {
         int valeurX = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_LEFTX);
@@ -218,6 +218,7 @@ void gererInputManette(Jeu *jeu, SDL_Event *event) {
     }
 }
 
+// config auto sur plein ecran
 void toggleFullscreen(Jeu *jeu) {
     Uint32 flags = SDL_GetWindowFlags(jeu->window);
     if (flags & SDL_WINDOW_FULLSCREEN) {
@@ -228,7 +229,7 @@ void toggleFullscreen(Jeu *jeu) {
         logMessage("Basculé en mode plein écran");
     }
 
-    // Mettre à jour les dimensions de la fenêtre
+    // mise a jour des dimensions
     SDL_GetWindowSize(jeu->window, &jeu->largeurEcran, &jeu->hauteurEcran);
     logMessage("Dimensions mises à jour : %dx%d", jeu->largeurEcran, jeu->hauteurEcran);
 }

@@ -8,7 +8,7 @@ int num_attacks = 0;
 static Uint32 last_auto_attack = 0;
 SDL_Texture* attack_texture = NULL;
 
-// Déclarations des fonctions utilitaires
+// declartions importantes attacks/zombies
 int find_closest_zombie(int x, int y);
 float calculate_distance(float x1, float y1, float x2, float y2);
 float calculate_angle_to_target(float x1, float y1, float x2, float y2);
@@ -18,7 +18,7 @@ void init_attacks(SDL_Renderer* renderer) {
         attacks[i].active = 0;
     }
     
-    attack_texture = IMG_LoadTexture(renderer, "./assets/attacks/simple.png");
+    attack_texture = IMG_LoadTexture(renderer, "./assets/attacks/simple.png"); // chemin
     if (!attack_texture) {
         logMessage("ERREUR: Impossible de charger simple.png: %s", IMG_GetError());
     }
@@ -42,7 +42,7 @@ void create_attack(float x, float y, float angle) {
 
 void update_attacks(Jeu* jeu, int joueurX, int joueurY, int using_controller) {
     Uint32 current_time = SDL_GetTicks();
-    if (using_controller && current_time - last_auto_attack >= AUTO_ATTACK_INTERVAL) {
+    if (using_controller && current_time - last_auto_attack >= AUTO_ATTACK_INTERVAL) { 
         int target = find_closest_zombie(joueurX, joueurY);
         if (target != -1) {
             float angle = calculate_angle_to_target(joueurX, joueurY, zombies[target]->x, zombies[target]->y);
@@ -77,7 +77,7 @@ void update_attacks(Jeu* jeu, int joueurX, int joueurY, int using_controller) {
         }
 
         Uint32 currentTime = SDL_GetTicks();
-        if (currentTime - attack->lastUpdateTime > 50) {  // Réduction du délai entre les frames (de 100 à 50ms)
+        if (currentTime - attack->lastUpdateTime > 50) {  // spritesheet attaque delay
             attack->currentFrame = (attack->currentFrame + 1) % attack->totalFrames;
             attack->lastUpdateTime = currentTime;
         }
@@ -100,11 +100,11 @@ void render_attacks(SDL_Renderer* renderer, Jeu* jeu, int joueurCarteX, int joue
         Attack* attack = &attacks[i];
         if (!attack->active || !attack_texture) continue;
 
-        // Convertir les coordonnées monde en coordonnées écran
+        // convertir les coordonnées monde en coordonnées écran
         int screenX = attack->x - joueurCarteX + jeu->largeurEcran / 2;
         int screenY = attack->y - joueurCarteY + jeu->hauteurEcran / 2;
 
-        // Calcul des frames pour la spritesheet
+        // calculer la position sprite dans la spritesheet
         int frameX = (attack->currentFrame % 6) * 32;
         int frameY = (attack->currentFrame / 6) * 32;
 
@@ -133,16 +133,19 @@ int find_closest_zombie(int x, int y) {
     return closest_index;
 }
 
+// fonctions utiles pour les attaques et les zombies 
 float calculate_distance(float x1, float y1, float x2, float y2) {
     float dx = x2 - x1;
     float dy = y2 - y1;
     return sqrtf(dx * dx + dy * dy);
 }
 
+// calculer l'angle entre deux points
 float calculate_angle_to_target(float x1, float y1, float x2, float y2) {
     return atan2f(y2 - y1, x2 - x1);
 }
 
+// attaque de la souris (a corriger)
 void handle_mouse_attack(int mouseX, int mouseY, int playerX, int playerY) {
     static Uint32 last_attack_time = 0;
     Uint32 current_time = SDL_GetTicks();

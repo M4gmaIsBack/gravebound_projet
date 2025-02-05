@@ -28,4 +28,4 @@ void charger_zombies(char *save);
 void final_wave();
 void zombie_behaviour();
 
-#endif // ZOMBIES_H
+#endif

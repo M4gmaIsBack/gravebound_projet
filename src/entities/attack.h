@@ -7,7 +7,7 @@
 #define MAX_ATTACKS 20
 #define ATTACK_DAMAGE 25
 #define ATTACK_COOLDOWN 500  // en millisecondes
-#define AUTO_ATTACK_INTERVAL 1000 // Intervalle entre les attaques auto (1 seconde)
+#define AUTO_ATTACK_INTERVAL 1000 // (1 secondes)
 
 typedef struct {
     float x, y, angle, speed;
@@ -22,8 +22,8 @@ extern int num_attacks;
 void init_attacks(SDL_Renderer* renderer);
 void create_attack(float x, float y, float angle);
 void update_attacks(Jeu* jeu, int joueurX, int joueurY, int using_controller);
-void render_attacks(SDL_Renderer* renderer, Jeu* jeu, int joueurCarteX, int joueurCarteY);  // Modifier la déclaration de render_attacks pour inclure les coordonnées du joueur
+void render_attacks(SDL_Renderer* renderer, Jeu* jeu, int joueurCarteX, int joueurCarteY);  // afficher les attaques IMPOTANTE
 void cleanup_attacks(void);
 void handle_mouse_attack(int mouseX, int mouseY, int playerX, int playerY);
 
-#endif // ATTACK_H
+#endif
