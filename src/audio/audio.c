@@ -6,7 +6,7 @@ void configurerVolume(AudioAssets *audio, int volume) {
     if (volume < 0) volume = 0;
     if (volume > MIX_MAX_VOLUME) volume = MIX_MAX_VOLUME;
 
-    // Appliquer le volume à chaque effet sonore
+    // regle le volume des sons
     Mix_VolumeChunk(audio->buttonChange, volume);
     Mix_VolumeChunk(audio->buttonSelect, volume);
 
@@ -20,7 +20,7 @@ int initAudio(AudioAssets *audio) {
         return 0;
     }
 
-    // Charger les sons
+    // a copier pour chaque son (dupliq)
     audio->buttonChange = Mix_LoadWAV("./assets/song/button_change.mp3");
     if (!audio->buttonChange) {
         logMessage("Erreur chargement son button_change : %s", Mix_GetError());

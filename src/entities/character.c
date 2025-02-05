@@ -11,7 +11,7 @@ Personnage personnage;
 
 Personnage charger_personnage(SDL_Renderer* renderer, char *save) {
 
-    personnage.direction = -1;  // Initialisation à une valeur impossible pour vérifier si le chargement a réussi
+    personnage.direction = -1;  // initialisation valeur impossible pour vérifier si le chargement a réussi
 
     if (!renderer) {
         logMessage("ERREUR: renderer est nul dans chargerPersonnage");
@@ -96,7 +96,6 @@ Personnage charger_personnage(SDL_Renderer* renderer, char *save) {
 void mettreAJourPersonnage(const Uint8* state) {
     personnage.moving = 0;
 
-    // Détermine la direction selon les touches pressées (ZQSD)
     if (state[SDL_SCANCODE_W]) {
         personnage.direction = 3;
         personnage.y -= personnage.vitesse;
@@ -115,19 +114,19 @@ void mettreAJourPersonnage(const Uint8* state) {
         personnage.moving = 1;
     }
 
-    // Met à jour la frame uniquement si le personnage bouge
+    // frame uniquement si le personnage bouge
     if (personnage.moving) {
         personnage.currentFrame = (personnage.currentFrame + 1) % personnage.totalFrames;
     } else {
         personnage.currentFrame = 1;
     }
     
-    // Mise à jour du compteur d'invincibilité
+    // invicibilité
     if (personnage.invincibilite > 0) {
         personnage.invincibilite--;
     }
 
-    // Attaque avec la touche ESPACE
+    // attaque ESPACE (pas toucher c'est annulé)
     if (state[SDL_SCANCODE_SPACE]) {
         attaquerZombies();
     }
@@ -191,11 +190,11 @@ void dessinerBarreDeVie(SDL_Renderer* renderer, int x, int y, int largeur, int h
     SDL_Rect fond = { x, y, largeur, hauteur };
     SDL_Rect barre = { x, y, (int)((double)largeur * vie_actuelle / vie_max), hauteur };
 
-    // Dessiner le fond de la barre de vie (rouge)
+    // barre de vie (rouge)
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
     SDL_RenderFillRect(renderer, &fond);
 
-    // Dessiner la barre de vie (verte)
+    // barre de vie (verte)
     SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
     SDL_RenderFillRect(renderer, &barre);
 }

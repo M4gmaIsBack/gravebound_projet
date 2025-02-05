@@ -29,8 +29,8 @@ Zombie* creer_zombie(float sante, float puissance_attaque, float vitesse, float 
     nouveau_zombie->y = y;
     nouveau_zombie->type = strdup(type);
     if (strcmp(type, "boss") == 0) {
-        nouveau_zombie->frameWidth = 128;  // Increase size for boss
-        nouveau_zombie->frameHeight = 128; // Increase size for boss
+        nouveau_zombie->frameWidth = 128; 
+        nouveau_zombie->frameHeight = 128;
     } else {
         nouveau_zombie->frameWidth = 32;
         nouveau_zombie->frameHeight = 32;
@@ -50,22 +50,22 @@ int verifier_collision_zombies(int x, int y, int zombie_actuel) {
             int dy = y - zombies[i]->y;
             int distance = (int)sqrt(dx * dx + dy * dy);
             if (distance < ZOMBIE_DISTANCE_MIN) {
-                return 1; // Collision détectée
+                return 1; // collision détectée =1
             }
         }
     }
-    return 0; // Pas de collision
+    return 0; // 0 colision
 }
 
 void deplacer_vers_joueur(Zombie* zombie, int joueur_x, int joueur_y) {
     if (zombie == NULL) return;
     
-    // Calculer la direction souhaitée
+    // distance entre le zombie et le joueur
     int dx = joueur_x - zombie->x;
     int dy = joueur_y - zombie->y;
     float distance = sqrt(dx * dx + dy * dy);
 
-    // Mettre à jour la direction d'animation
+    // angle zombie -> joueur
     if (abs(dx) > abs(dy)) {
         zombie->direction = (dx > 0) ? 2 : 1; // droite : gauche
     } else {
@@ -73,11 +73,11 @@ void deplacer_vers_joueur(Zombie* zombie, int joueur_x, int joueur_y) {
     }
 
     if (distance > 0) {
-        // Calculer la nouvelle position potentielle
+        // distance rafrachissement
         int nouveau_x = zombie->x + (int)(zombie->vitesse * dx / distance);
         int nouveau_y = zombie->y + (int)(zombie->vitesse * dy / distance);
         
-        // Vérifier les collisions pour cette position
+        // vérifier collisions avec autres zombies
         int index_zombie = -1;
         for (int i = 0; i < nombre_zombies; i++) {
             if (zombies[i] == zombie) {
@@ -86,16 +86,16 @@ void deplacer_vers_joueur(Zombie* zombie, int joueur_x, int joueur_y) {
             }
         }
         
-        // Si pas de collision, déplacer le zombie
+        // si pas de collision déplace zombie
         if (!verifier_collision_zombies(nouveau_x, nouveau_y, index_zombie)) {
             zombie->x = nouveau_x;
             zombie->y = nouveau_y;
             zombie->moving = 1;
             
-            // Animation
+           
             zombie->currentFrame = (zombie->currentFrame + 1) % zombie->totalFrames;
         } else {
-            // En cas de collision, essayer de se déplacer latéralement
+            // si collision, zombie de angle différent
             float angle = atan2(dy, dx);
             float angle_alternative = angle + M_PI/2;  // perpendiculaire
             
@@ -124,14 +124,14 @@ void nettoyer_zombies() {
             free(zombies[i]);
             zombies[i] = NULL;
 
-            // Décaler les autres zombies pour combler le vide
+            
             for (int j = i; j < nombre_zombies - 1; j++) {
                 zombies[j] = zombies[j + 1];
             }
             zombies[--nombre_zombies] = NULL;
         }
     }
-    // Réduire la capacité si nécessaire
+    // a changer si necessaire
     if (nombre_zombies < capacite_zombies / 2) {
         capacite_zombies /= 2;
         zombies = realloc(zombies, capacite_zombies * sizeof(Zombie*));
@@ -145,7 +145,7 @@ void spawn_zombies(int centreX, int centreY, int rayon) {
 }
 
 void mettre_a_jour_zombies(int joueur_x, int joueur_y) {
-    nettoyer_zombies(); // Supprime les zombies morts
+    nettoyer_zombies(); // supprime les zombies morts
     for (int i = 0; i < nombre_zombies; i++) {
         deplacer_vers_joueur(zombies[i], joueur_x, joueur_y);
 
@@ -167,7 +167,7 @@ void initialiser_zombies_autour_position(int nombre, int centreX, int centreY, i
         int angleAleatoire = rand() % 360;
         int distanceAleatoire = rayon + (rand() % 100);
 
-        // Convertir coordonnées polaires en cartésiennes
+        // coordonnées polaires en cartésiennes
         double angleRad = angleAleatoire * M_PI / 180.0;
         int zombieX = centreX + (int)(cos(angleRad) * distanceAleatoire);
         int zombieY = centreY + (int)(sin(angleRad) * distanceAleatoire);
@@ -320,17 +320,15 @@ void afficher_zombies(Jeu *jeu, int joueurCarteX, int joueurCarteY, int centreEc
         int zombieEcranX = zombies[i]->x - joueurCarteX + centreEcranX;
         int zombieEcranY = zombies[i]->y - joueurCarteY + centreEcranY;
 
-        // Vérifier les collisions avec le personnage en utilisant les coordonnées de la carte
+        // collisions avec le personnage avec coordonnées carte
         int dx = zombies[i]->x - joueurCarteX;
         int dy = zombies[i]->y - joueurCarteY;
         float distance = sqrt(dx * dx + dy * dy);
 
-        if (distance < 32) { // Si le zombie est proche du personnage
+        if (distance < 32) { // si le zombie est proche du personnage
             subirDegatsPersonnage(zombies[i]->puissance_attaque);
             // logMessage("Contact avec zombie! Distance: %f", distance);
         }
-
-        // Rendu du zombie
 
         if (zombies[i]->texture == NULL && strcmp(zombies[i]->type, "boss") == 1) {
             zombies[i]->texture = obtenirTexture(jeu->renderer, "./assets/zombies/zombies_spritesheet.png");        
