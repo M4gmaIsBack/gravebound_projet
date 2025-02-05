@@ -148,9 +148,9 @@ static void gererClavierMenu(SDL_Event *e, int *sel, int *quitter, Game *game, A
             break;
         case SDLK_RETURN:
             jouerSon(audio->buttonSelect);
-            if (*sel == 0) { // Si le bouton play est sélectionné
-                *quitter = 2; // Indiquer que le jeu doit être lancé
-            } else if (*sel == 3) { // Si le bouton boutique est sélectionné
+            if (*sel == 0) { 
+                *quitter = 2; 
+            } else if (*sel == 3) { 
                 afficherMenuPersonnage(game, audio);
             } else {
                 *quitter = 2;

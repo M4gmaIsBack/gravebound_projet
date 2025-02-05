@@ -58,7 +58,7 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
             if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_SPACE) {
                 skip_day(&game->jeu.countdown);
             }
-
+            // gestion du pleine ecran
             if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_F11) {
                 toggleFullscreen(&game->jeu);
             }
@@ -113,15 +113,40 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
         }
 
 
+        // cooldown sur le temps écoulé
+        static Uint32 lastUpdateTimeCD = 0;
+        Uint32 currentTimeCD = SDL_GetTicks();
+        if (currentTimeCD > lastUpdateTimeCD + 1000) {
+            update_time(&game->jeu.countdown);
+            cooldown_skills(personnage);
+            display_time(&game->jeu.countdown);
+
+            // On verifie si une nouvelle vague de zombie doit arrivéé
+            if (game->jeu.countdown.elapsed_time + game->jeu.countdown.OFFSET * 60 > (vague * 24 + game->jeu.countdown.OFFSET) * 60) {
+                vague++;
+            }
+
+            if(game->jeu.countdown.hour == 0 && game->jeu.countdown.minute == 0 && game->jeu.countdown.second == 0 && vague > 0) {
+                final_wave(); // Déclenche l'événement de la vague finale
+            }
+
+            lastUpdateTimeCD = currentTimeCD;
+        }
+
+        // apparition des zombies en fonction du temps et des vagues
         static Uint32 lastUpdateTimeZ = 0;
         Uint32 currentTimeZ = SDL_GetTicks();
-        if (currentTimeZ > lastUpdateTimeZ + config.zombies.spawn_delay[vague] * 1000) { //5000
+        if (currentTimeZ > lastUpdateTimeZ + config.zombies.spawn_delay[vague] * 1000) { // Délai entre chaque apparition
+            //On vérifie si le spawn des zombies est actif entre certaines heures du jeu
             if (game->jeu.countdown.time > 20 || game->jeu.countdown.time < 8) {
-                spawn_zombies((game->jeu.largeurEcran / 2) - game->jeu.carteX, (game->jeu.hauteurEcran / 2) - game->jeu.carteY , config.zombies.spawn_radius[vague]); //1000
+                spawn_zombies(
+                    (game->jeu.largeurEcran / 2) - game->jeu.carteX,
+                    (game->jeu.hauteurEcran / 2) - game->jeu.carteY,
+                    config.zombies.spawn_radius[vague] // Rayon de spawn des zombies
+                );
             }
             lastUpdateTimeZ = currentTimeZ;
         }
-
 
         if (personnage->vitesse > personnage->vitesse_max) {
             personnage->vitesse -= 0.005;
@@ -135,14 +160,16 @@ void bouclePrincipale(Game *game, char *save, Personnage *personnage) {
         update_attacks(&game->jeu, joueurCarteX, joueurCarteY, game->using_controller);
 
         majRendu(&game->jeu, personnage);
-        
+
         enregistrer_coordonnees(&game->jeu, save);
 
         SDL_Delay(16);
+
     }
 
     enregistrer_progression(game, save, personnage);
-    logMessage("Fin de la boucle principale");
+    logMessage("Fin de la boucle principale"); 
+
 }
 
 // Nettoie les ressources du jeu

@@ -22,7 +22,7 @@ SDL_Texture* obtenirTexture(SDL_Renderer* renderer, const char* chemin) {
         courant = courant->suivant;
     }
 
-    // Charger une nouvelle texture si elle n'est pas dans le cache
+    // Charge une nouvelle texture si elle n'est pas dans le cache
     SDL_Surface* surface = IMG_Load(chemin);
     if (!surface) {
         logMessage("Erreur chargement image: %s", IMG_GetError());

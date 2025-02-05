@@ -1,15 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "menu_personnage.h"
-#include "menu.h"  // Ajout de cette ligne
+#include "menu.h"
 #include "../audio/audio.h"
 #include "../logs/logging.h"
 
-const char* cheminSpriteSheetPersonnage = "./assets/character/spritesheet_marcus.png";  // Initialisation par défaut
-
-// Déclaration des fonctions
-static void gererClavierMenuPersonnage(SDL_Event *e, int *selection, int *quitter, AudioAssets *audio);
-static void renderMenuPersonnage(Game *game, MenuPersoAssets *assets, int selection);
+const char* cheminSpriteSheetPersonnage = "./assets/character/spritesheet_marcus.png";
 
 static int chargerAssetsMenuPerso(SDL_Renderer *r, MenuPersoAssets *m) {
     // Charger le background
@@ -21,7 +17,7 @@ static int chargerAssetsMenuPerso(SDL_Renderer *r, MenuPersoAssets *m) {
     m->background = SDL_CreateTextureFromSurface(r, surface);
     SDL_FreeSurface(surface);
 
-    // Charger les personnages avec le nouveau chemin
+    // Charger les personnages
     const char* paths[3] = {
         "./assets/character/spritesheet_marcus.png",
         "./assets/character/spritesheet_sarah.png",
@@ -106,7 +102,6 @@ static void gererClavierMenuPersonnage(SDL_Event *e, int *selection, int *quitte
             jouerSon(audio->buttonChange);
             break;
         case SDLK_RETURN:
-            // Sélectionner le personnage
             jouerSon(audio->buttonSelect);
             const char* paths[3] = {
                 "./assets/character/spritesheet_marcus.png",
@@ -126,16 +121,13 @@ static void renderMenuPersonnage(Game *game, MenuPersoAssets *assets, int select
     // Afficher le background
     SDL_RenderCopy(game->jeu.renderer, assets->background, NULL, NULL);
 
-    // Dimensions et espacement
     int persoWidth = 300;
     int persoHeight = 300;
     int spacing = 70;
 
-    // Calcul des positions pour centrer verticalement et horizontalement
-    int centerY = (game->jeu.hauteurEcran / 2) - (persoHeight / 2); // Centre vertical
-    int centerX = game->jeu.largeurEcran / 2; // Centre horizontal
+    int centerY = (game->jeu.hauteurEcran / 2) - (persoHeight / 2);
+    int centerX = game->jeu.largeurEcran / 2; 
 
-    // Afficher les personnages avec le système de carousel
     for (int i = -1; i <= 1; i++) {
         int index = (selection + i + 3) % 3;
         int x = centerX + i * (persoWidth + spacing) - (persoWidth / 2);
@@ -153,20 +145,19 @@ static void renderMenuPersonnage(Game *game, MenuPersoAssets *assets, int select
         SDL_RenderCopy(game->jeu.renderer, assets->persos[index], NULL, &dst);
     }
 
-    // Repositionner les flèches en fonction du nouveau centre
     int flecheWidth = 150;
     int flecheHeight = 150;
     
     SDL_Rect flecheGauche = {
         .x = centerX - (persoWidth + spacing + flecheWidth),
-        .y = centerY + (persoHeight - flecheHeight) / 2, // Aligner verticalement avec les personnages
+        .y = centerY + (persoHeight - flecheHeight) / 2, 
         .w = flecheWidth,
         .h = flecheHeight
     };
     
     SDL_Rect flecheDroite = {
         .x = centerX + persoWidth + spacing,
-        .y = centerY + (persoHeight - flecheHeight) / 2, // Aligner verticalement avec les personnages
+        .y = centerY + (persoHeight - flecheHeight) / 2, 
         .w = flecheWidth,
         .h = flecheHeight
     };
@@ -176,7 +167,5 @@ static void renderMenuPersonnage(Game *game, MenuPersoAssets *assets, int select
 
     SDL_RenderPresent(game->jeu.renderer);
 }
-
-// ...existing code...
 
 void gererClicBoutonBoutique();

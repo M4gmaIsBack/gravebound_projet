@@ -53,7 +53,7 @@ int initGraphique(Jeu *jeu) {
         logMessage("Manette non détectée ou échec d'initialisation");
     }
 
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");  // Pixel art mode
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
     SDL_RenderSetLogicalSize(jeu->renderer, jeu->largeurEcran, jeu->hauteurEcran);
     SDL_SetRenderDrawBlendMode(jeu->renderer, SDL_BLENDMODE_BLEND);
 
@@ -101,7 +101,6 @@ void majRendu(Jeu *jeu, Personnage *personnage) {
     SDL_SetRenderDrawColor(jeu->renderer, 0, 0, 0, 255);
     SDL_RenderClear(jeu->renderer);
 
-    // Calculer la zone visible avec une marge plus petite
     int blocsVisiblesX = (jeu->largeurEcran / LARGEUR_CASE) + 2;
     int blocsVisiblesY = (jeu->hauteurEcran / HAUTEUR_CASE) + 2;
 
